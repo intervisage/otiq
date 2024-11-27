@@ -1,0 +1,3 @@
+/home/paul/otiq/build/CMakeFiles/otiq.dir
+/home/paul/otiq/build/CMakeFiles/edit_cache.dir
+/home/paul/otiq/build/CMakeFiles/rebuild_cache.dir
