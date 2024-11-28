@@ -1103,6 +1103,9 @@ CMakeFiles/otiq.dir/src/otpp.cpp.o: ../src/otpp.cpp \
   /usr/include/x86_64-linux-gnu/bits/getopt_core.h \
   /usr/include/x86_64-linux-gnu/bits/unistd_ext.h \
   /usr/include/linux/close_range.h \
+  /usr/include/c++/11/iostream \
+  /usr/include/c++/11/istream \
+  /usr/include/c++/11/bits/istream.tcc \
   ../include/otpp.h \
   ../include/otdb.h \
   ../include/otbw.h \

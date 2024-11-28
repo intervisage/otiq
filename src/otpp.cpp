@@ -9,6 +9,9 @@
 #include <pthread.h>
 #include <condition_variable>
 #include <unistd.h>
+#include <chrono>
+#include <iostream>
+#include <atomic>
 
 #include "otpp.h"
 #include "otbw.h"
@@ -19,7 +22,11 @@ pcpp::RawPacket *receivedPacket;
 std::mutex mtx;
 std::condition_variable pp_cv;
 
-bool runThread;
+uint64_t minExTime = 1000000;
+uint64_t maxExTime = 0;
+uint64_t threadRunCount;
+
+static std::atomic<bool> runThread;
 bool terminateThread;
 
 namespace otpp
@@ -29,42 +36,49 @@ namespace otpp
 	{
 		// initialise shared running status with locked
 
-		std::unique_lock<std::mutex> startThreadLock(mtx);
+		//std::unique_lock<std::mutex> startThreadLock(mtx);
 		runThread = false;
+		threadRunCount =0;
 		terminateThread = false;
 		processPacketThreadPtr = std::thread(processPacketThread);
 		std::string threadName = "otiq-otpp";
 		pthread_setname_np(processPacketThreadPtr.native_handle(), threadName.c_str());
 		otlog::log("OTPP: Packet processing loop initiated ( not running ).");
-		mtx.unlock();
+		//mtx.unlock();
 	}
 
 	void stop()
 	{
 
 		// set terminate flag (and runThread) and notify thread.
-		std::unique_lock<std::mutex> stopThreadLock(mtx);
+		//std::unique_lock<std::mutex> stopThreadLock(mtx);
 		runThread = false;
 		terminateThread = true;
-		mtx.unlock();
-		pp_cv.notify_one();
+		//mtx.unlock();
+		//pp_cv.notify_one();
 
 		// wait for 1 second to allow current loop time to complete.
-		sleep(1);
+		//sleep(1);
 
-		if (processPacketThreadPtr.joinable())
-		{
-			processPacketThreadPtr.join();
-		}
+		processPacketThreadPtr.join();
+
+		// if (processPacketThreadPtr.joinable())
+		// {
+		// 	processPacketThreadPtr.join();
+		// }
+
+		/* EXECUTION TIMING */
+		std::cout << "Max Execution time (nano seconds) = " << std::to_string(maxExTime) << std::endl;
+		std::cout << "Min Execution time (nano seconds) = " << std::to_string(minExTime) << std::endl;
+		std::cout << "Thread Run Count = " << std::to_string(threadRunCount) << std::endl;
 	}
 
 	int processPacket(pcpp::RawPacket *packet)
 	{
 
-		receivedPacket = packet;
-
 		if (!runThread)
 		{
+			receivedPacket = packet;
 			// std::unique_lock<std::mutex> processPacketLock(mtx);
 			runThread = true;
 			// pp_cv.notify_one();
@@ -72,7 +86,7 @@ namespace otpp
 		}
 		else
 		{
-
+			otbw::incDropPacketCount();
 			return -1;
 		}
 	}
@@ -85,9 +99,15 @@ void processPacketThread()
 
 	while (!terminateThread)
 	{
+
 		if (runThread)
 		{
+
+			auto start = std::chrono::high_resolution_clock::now();
+
 			runThread = false;
+
+			threadRunCount ++;
 			// process thread
 
 			std::string queryString = "";
@@ -116,8 +136,8 @@ void processPacketThread()
 			// }
 
 			// parse raw packet
-			 pcpp::Packet parsedPacket(receivedPacket);
-			pcpp::EthLayer *ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
+			// pcpp::Packet parsedPacket(receivedPacket);
+			// pcpp::EthLayer *ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
 
 			// check if valid eternet II packet and stop processing if not
 			// TODO - Add Support for IEEE 802.3 ?????????????????????????????????
@@ -161,19 +181,34 @@ void processPacketThread()
 			// }
 
 			// check if IPv4
-			pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
-			if (parsedPacket.isPacketOfType(pcpp::IPv4))
-			{
-				pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
-				updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
-				updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
-			}
+			// pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+			// if (parsedPacket.isPacketOfType(pcpp::IPv4))
+			// {
+			// 	pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+			// 	updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
+			// 	updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
+			// }
 
 			// once packet processed - change status of runThread
-			//runThread = false;
+			// runThread = false;
 
+			/* EXECUTION TIMING */
 
+			auto stop = std::chrono::high_resolution_clock::now();
 
+			uint64_t timeTaken = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+
+			otlog::log("MAIN: processPacket Execution time (nano seconds) = " + std::to_string(timeTaken));
+
+			if (timeTaken < minExTime)
+			{
+				minExTime = timeTaken;
+			}
+
+			if (timeTaken > maxExTime)
+			{
+				maxExTime = timeTaken;
+			}
 		}
 	}
 }
@@ -185,6 +220,9 @@ macInfo - enumerated value indicating how MAC address was determined
  */
 int updateActiveAsset(std::string ipv4Addr, std::string macAddr, otdb::MacInfo macInfo)
 {
+
+	return 0;
+
 	std::string queryString; // used in queries
 	int rc;					 // return values from queries
 
@@ -283,6 +321,7 @@ ipv4 - IP V4 Address as string value
  */
 int updateInactiveAsset(std::string ipv4Addr)
 {
+	return 0;
 	// add destination address with no time stamp if not already in table
 	std::string queryString = "INSERT OR IGNORE INTO ASSETS (IP) VALUES (\"" + ipv4Addr + "\");";
 	return otdb::query(queryString);
