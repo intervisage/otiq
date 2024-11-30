@@ -12,19 +12,24 @@
 #include <chrono>
 #include <iostream>
 #include <atomic>
+#include <deque>
 
 #include "otpp.h"
 #include "otbw.h"
 #include "otlog.h"
+
+std::deque<std::unique_ptr<pcpp::RawPacket>> pktBuffer;
 
 std::thread processPacketThreadPtr;
 pcpp::RawPacket *receivedPacket;
 std::mutex mtx;
 std::condition_variable pp_cv;
 
-uint64_t minExTime = 1000000;
-uint64_t maxExTime = 0;
+uint64_t minExTime;
+uint64_t maxExTime;
+uint64_t totalExecutionTime;
 uint64_t threadRunCount;
+uint64_t maxBufferSize;
 
 static std::atomic<bool> runThread;
 bool terminateThread;
@@ -36,61 +41,126 @@ namespace otpp
 	{
 		// initialise shared running status with locked
 
-		//std::unique_lock<std::mutex> startThreadLock(mtx);
+		// std::unique_lock<std::mutex> startThreadLock(mtx);
+		minExTime = 1000000;
+		maxExTime = 0;
+		totalExecutionTime = 0;
+		maxBufferSize = 0;
+
 		runThread = false;
-		threadRunCount =0;
+		threadRunCount = 0;
 		terminateThread = false;
 		processPacketThreadPtr = std::thread(processPacketThread);
 		std::string threadName = "otiq-otpp";
 		pthread_setname_np(processPacketThreadPtr.native_handle(), threadName.c_str());
 		otlog::log("OTPP: Packet processing loop initiated ( not running ).");
-		//mtx.unlock();
+		otlog::log("Maximum packet buffer size supported = " + std::to_string(pktBuffer.max_size()));
+		// mtx.unlock();
 	}
 
 	void stop()
 	{
 
 		// set terminate flag (and runThread) and notify thread.
-		//std::unique_lock<std::mutex> stopThreadLock(mtx);
-		runThread = false;
+		// std::unique_lock<std::mutex> stopThreadLock(mtx);
+		// runThread = false;
 		terminateThread = true;
-		//mtx.unlock();
-		//pp_cv.notify_one();
+
+		// mtx.unlock();
+		// pp_cv.notify_one();
 
 		// wait for 1 second to allow current loop time to complete.
-		//sleep(1);
+		sleep(1);
 
-		processPacketThreadPtr.join();
+		if (processPacketThreadPtr.joinable())
+		{
+			processPacketThreadPtr.join();
+		}
 
-		// if (processPacketThreadPtr.joinable())
-		// {
-		// 	processPacketThreadPtr.join();
-		// }
+		// clear buffer - this will delete packet instances through use of unique_ptrs
+		pktBuffer.clear();
 
 		/* EXECUTION TIMING */
+		std::cout << "Thread Run Count = " << std::to_string(threadRunCount) << std::endl;
 		std::cout << "Max Execution time (nano seconds) = " << std::to_string(maxExTime) << std::endl;
 		std::cout << "Min Execution time (nano seconds) = " << std::to_string(minExTime) << std::endl;
-		std::cout << "Thread Run Count = " << std::to_string(threadRunCount) << std::endl;
+		std::cout << "Avg Execution time (nano seconds) = " << std::to_string(totalExecutionTime / threadRunCount) << std::endl;
+		std::cout << "Maximum buffer size = " << std::to_string(maxBufferSize) << std::endl;
+
+		// clear deque - not unique pointer will ensure instances are deleted.
+		pktBuffer.clear();
 	}
 
-	int processPacket(pcpp::RawPacket *packet)
+	void processPacket(pcpp::RawPacket *packet)
 	{
 
-		if (!runThread)
-		{
-			receivedPacket = packet;
-			// std::unique_lock<std::mutex> processPacketLock(mtx);
-			runThread = true;
-			// pp_cv.notify_one();
-			return 0;
-		}
-		else
+		// limit maximum size of pktBuffer
+		if (pktBuffer.size() > 50000)
 		{
 			otbw::incDropPacketCount();
-			return -1;
+			return;
 		}
+			// instantiate new packet and copy passed 
+			pktBuffer.push_back(std::unique_ptr<pcpp::RawPacket>(new pcpp::RawPacket(*packet)));
+
+		if (pktBuffer.size() > maxBufferSize)
+		{
+			maxBufferSize = pktBuffer.size();
+			std::cout << "Max packet buffer size =  " << std::to_string(maxBufferSize) << std::endl;
+		}
+
+		// if (!runThread)
+		// {
+		// 	receivedPacket = packet;
+		// 	// std::unique_lock<std::mutex> processPacketLock(mtx);
+		// 	runThread = true;
+		// 	// pp_cv.notify_one();
+		// 	return 0;
+		// }
+		// else
+		// {
+		// 	otbw::incDropPacketCount();
+		// 	return -1;
+		// }
 	}
 
+}
+/***********
+ * 
+ * THIS CODE NEEDS A MUTEX TO MAKE SURE ONLY ONE THREAD HAS ACCESS
+ */
+std::unique_ptr<pcpp::RawPacket> pktBufferOperation(bool inserting, pcpp::RawPacket *packet)
+{
+	if (inserting)
+	{
+		// enforce limit on buffer size //TODO - need to consider how this limit is set.
+		if (pktBuffer.size() > 50000)
+		{
+			otbw::incDropPacketCount();
+			
+		}
+
+		// instatiate new packet with passed rawpacket.
+		pktBuffer.push_back(std::unique_ptr<pcpp::RawPacket>(new pcpp::RawPacket(*packet)));
+
+		if (pktBuffer.size() > maxBufferSize)
+		{
+			maxBufferSize = pktBuffer.size();
+			std::cout << "Max packet buffer size =  " << std::to_string(maxBufferSize) << std::endl;
+		}
+		//return a null ptr
+		return std::unique_ptr<pcpp::RawPacket>(nullptr);
+	}
+	else{
+		//extracting - so take ownership and pass unique_ptr.
+		return std::move(pktBuffer.front());
+
+		/*************
+		 * remove font - or check it is already moved.
+		 */
+
+
+	}
 }
 
 // Called from main to process packets as they arrive
@@ -99,20 +169,24 @@ void processPacketThread()
 
 	while (!terminateThread)
 	{
-
-		if (runThread)
+		if (!pktBuffer.empty())
 		{
+
+			// process first element of vector
 
 			auto start = std::chrono::high_resolution_clock::now();
 
-			runThread = false;
+			threadRunCount++;
 
-			threadRunCount ++;
+			receivedPacket = pktBuffer.front().get();
+
+			pcpp::Packet parsedPacket(receivedPacket);
+
 			// process thread
 
-			std::string queryString = "";
-			char *error_message = 0;
-			int rc = 0;
+			// std::string queryString = "";
+			// char *error_message = 0;
+			// int rc = 0;
 
 			// thread loop  - only designed to process one packet at a time
 			// while (true)
@@ -136,7 +210,7 @@ void processPacketThread()
 			// }
 
 			// parse raw packet
-			// pcpp::Packet parsedPacket(receivedPacket);
+
 			// pcpp::EthLayer *ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
 
 			// check if valid eternet II packet and stop processing if not
@@ -181,16 +255,19 @@ void processPacketThread()
 			// }
 
 			// check if IPv4
-			// pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
-			// if (parsedPacket.isPacketOfType(pcpp::IPv4))
-			// {
-			// 	pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
-			// 	updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
-			// 	updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
-			// }
+			pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+			if (parsedPacket.isPacketOfType(pcpp::IPv4))
+			{
+				pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+				updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
+				updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
+			}
 
-			// once packet processed - change status of runThread
-			// runThread = false;
+			// once packet processed - remove raw packet instance from start of vector
+			if (pktBuffer.size() > 0) // TODO - remove if not ncessary
+			{
+				pktBuffer.pop_front();
+			}
 
 			/* EXECUTION TIMING */
 
@@ -198,7 +275,9 @@ void processPacketThread()
 
 			uint64_t timeTaken = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
 
-			otlog::log("MAIN: processPacket Execution time (nano seconds) = " + std::to_string(timeTaken));
+			totalExecutionTime += timeTaken;
+
+			// otlog::log("MAIN: processPacket Execution time (nano seconds) = " + std::to_string(timeTaken));
 
 			if (timeTaken < minExTime)
 			{
@@ -209,8 +288,14 @@ void processPacketThread()
 			{
 				maxExTime = timeTaken;
 			}
+			// if (maxBufferSize >= 200 && maxBufferSize != 18446744073709551602u)
+			// {
+			// 	std::cout << " thread run count = " << threadRunCount << "\t Execution time = " << std::to_string(timeTaken) << "\tMax Buffer Size = " << std::to_string(maxBufferSize) << std::endl;
+			// }
 		}
 	}
+
+	std::cout << " Buffer process loop terminated. Unprocessed buffer items  = " << std::to_string(pktBuffer.size()) << std::endl;
 }
 
 /* Adds asset to database if not alreaded added, otherwise updates asset, including time stamps

@@ -3,11 +3,12 @@
 #include <Packet.h>
 #include <PcapLiveDeviceList.h>
 #include <unistd.h>
-// #include <chrono>
 
 #include "otbw.h"
 #include "otlog.h"
 #include "otpp.h"
+
+
 
 // uint64_t min = 1000000;
 // uint64_t max = 0;
@@ -18,35 +19,12 @@
  */
 static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
 {
-
-	// auto start = std::chrono::high_resolution_clock::now();
-
 	otbw::addByteCount(packet->getRawDataLen());
 
+	otpp::processPacket(packet);
 
-	int rv = otpp::processPacket(packet);
-
-	// auto stop = std::chrono::high_resolution_clock::now();
-
-	// uint64_t timeTaken = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-
-	// otlog::log("MAIN: processPacket Execution time (nano seconds) = " + std::to_string(timeTaken));
-
-	// if (rv == -1)
-	// {
-	// 	otbw::incDropPacketCount();
-	// 	otlog::log("MAIN: Packet dropped");
-	// }
-
-	// if (timeTaken < min)
-	// {
-	// 	min = timeTaken;
-	// }
-
-	// if (timeTaken > max)
-	// {
-	// 	max = timeTaken;
-	// }
+	
+	
 }
 
 int main(int argc, char *argv[])
@@ -113,7 +91,7 @@ int main(int argc, char *argv[])
 
 	// pause main thread
 	// pcpp::multiPlatformSleep(30);
-	sleep(10);
+	sleep(20);
 
 	// stop capturing packets
 	dev->stopCapture();

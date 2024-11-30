@@ -1106,6 +1106,12 @@ CMakeFiles/otiq.dir/src/otpp.cpp.o: ../src/otpp.cpp \
   /usr/include/c++/11/iostream \
   /usr/include/c++/11/istream \
   /usr/include/c++/11/bits/istream.tcc \
+  /usr/include/c++/11/atomic \
+  /usr/include/c++/11/bits/atomic_base.h \
+  /usr/include/c++/11/bits/atomic_lockfree_defines.h \
+  /usr/include/c++/11/deque \
+  /usr/include/c++/11/bits/stl_deque.h \
+  /usr/include/c++/11/bits/deque.tcc \
   ../include/otpp.h \
   ../include/otdb.h \
   ../include/otbw.h \
@@ -1289,8 +1295,6 @@ CMakeFiles/otiq.dir/src/sqlite3.c.o: ../src/sqlite3.c \
 
 /usr/include/x86_64-linux-gnu/asm/types.h:
 
-/usr/include/linux/stat.h:
-
 /usr/include/x86_64-linux-gnu/bits/struct_stat.h:
 
 /usr/include/x86_64-linux-gnu/bits/stat.h:
@@ -1310,6 +1314,12 @@ CMakeFiles/otiq.dir/src/sqlite3.c.o: ../src/sqlite3.c \
 /usr/include/x86_64-linux-gnu/bits/math-vector.h:
 
 /usr/include/assert.h:
+
+/usr/include/c++/11/bits/deque.tcc:
+
+/usr/include/linux/stat.h:
+
+/usr/include/c++/11/deque:
 
 /usr/include/c++/11/bits/std_mutex.h:
 
@@ -1350,6 +1360,8 @@ CMakeFiles/otiq.dir/src/sqlite3.c.o: ../src/sqlite3.c \
 /usr/include/c++/11/bits/cxxabi_forced.h:
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
+
+/usr/include/c++/11/bits/stl_deque.h:
 
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
