@@ -15,6 +15,8 @@ int updateActiveAsset(std::string ipv4Addr, std::string macAddr = "", otdb::MacI
 
 int updateInactiveAsset(std::string ipv4Addr);
 
+std::unique_ptr<pcpp::RawPacket> pktBufferOps(bool inserting, pcpp::RawPacket *packet);
+
 namespace otpp
 {
     //  populates assets table based on passed packet

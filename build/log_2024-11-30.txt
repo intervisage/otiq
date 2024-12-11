@@ -1,8 +1,0 @@
-2024-11-30 15:30:35.622	OTDB: Found exiting database file ( test.db ).
-2024-11-30 15:30:35.622	OTDB: Using sqlite version 3.45.3
-2024-11-30 15:30:35.622	OTDB: Successfully loaded file-based database ( test.db ) into memory.
-2024-11-30 15:30:35.643	OTPP: Packet processing loop initiated ( not running ).
-2024-11-30 15:30:35.643	Maximum packet buffer size supported = 1152921504606846975
-2024-11-30 15:30:35.675	MAIN: Starting async traffic capture.
-2024-11-30 15:30:56.676	MAIN: Async traffic capture stopped.
-2024-11-30 15:30:58.651	OTDB: Successfully copied in-memory database to file ( test.db ).

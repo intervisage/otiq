@@ -239,7 +239,9 @@ namespace otdb
     /* Runs query after first clearing the reponse matrix  */
     int query(std::string queryString)
     {
+      
         clearResponseRows();
+     
         int rc = sqlite3_exec(db, queryString.c_str(), callback, 0, &error_message);
 
         if (rc != SQLITE_OK)

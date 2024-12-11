@@ -10,8 +10,7 @@
 
 
 
-// uint64_t min = 1000000;
-// uint64_t max = 0;
+uint64_t arriveCount=0;
 
 /**
  * A callback function for the async capture which is called each time a packet is captured
@@ -21,8 +20,9 @@ static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, 
 {
 	otbw::addByteCount(packet->getRawDataLen());
 
-	otpp::processPacket(packet);
+	arriveCount++;
 
+	otpp::processPacket(packet);
 	
 	
 }
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
 	// pause main thread
 	// pcpp::multiPlatformSleep(30);
-	sleep(20);
+	sleep(10);
 
 	// stop capturing packets
 	dev->stopCapture();
@@ -106,7 +106,11 @@ int main(int argc, char *argv[])
 	// tidy up process packet thread
 	otpp::stop();
 
-	otbw::printBandwidths();
+
+	std::cout << "Arrive Count = " << std::to_string(arriveCount) << std::endl;
+
+
+	//otbw::printBandwidths();
 
 	// Save and close database
 	otdb::close();
