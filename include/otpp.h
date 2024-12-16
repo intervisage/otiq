@@ -1,21 +1,16 @@
 #ifndef OTPP_H
 #define OTPP_H
 
-
 #include <Packet.h>
 
 #include "otdb.h"
 
+namespace
+{
 
+  
 
-
-void processPacketThread();
-
-int updateActiveAsset(std::string ipv4Addr, std::string macAddr = "", otdb::MacInfo macInfo = otdb::none);
-
-int updateInactiveAsset(std::string ipv4Addr);
-
-std::unique_ptr<pcpp::RawPacket> pktBufferOps(bool inserting, pcpp::RawPacket *packet);
+}
 
 namespace otpp
 {
@@ -27,6 +22,7 @@ namespace otpp
 
     // cleans up thread by joining it to the calling code.
     void stop();
+    // types of packet operations for paketBuffer
 
 }
 

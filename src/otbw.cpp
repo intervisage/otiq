@@ -24,7 +24,7 @@ namespace
     std::uint64_t bucketSize;
     std::uint64_t minBandwidth, maxBandwidth;
     std::uint64_t packetCount;
-    std::thread t1;
+    std::thread calcBandwidthThread;
     bool runStatus = false;
     std::uint64_t totalByteCount = 0;
     std::uint64_t totalDropPacketCount = 0;
@@ -113,6 +113,8 @@ namespace otbw
      */
     void start()
     {
+    
+
         // initialis smallest bucket
         // lowest number of bps per bucket. So with 10 buckets, max mandwidth = 999bps eg 1000bps - 1.
         bucketSize = 10;
@@ -126,15 +128,18 @@ namespace otbw
             bucketValue[i] = 0;
         }
 
+    
         // zero total byte count
         totalByteCount = 0;
 
         // start thread execution
         runStatus = true;
-        t1 = std::thread(calcBandwidth);
+        calcBandwidthThread = std::thread(calcBandwidth);
+
+        // provide custom name for thread
         std::string threadName = "otiq-otbw";
-        pthread_setname_np(t1.native_handle(), threadName.c_str());
-        // t1.detach(); NOTE _ DETACH NOT REQUIRED _ NEED THREAD TO BE JOINED BY STOP
+        pthread_setname_np(calcBandwidthThread.native_handle(), threadName.c_str());
+        // calcBandwidthThread.detach(); NOTE _ DETACH NOT REQUIRED _ NEED THREAD TO BE JOINED BY STOP
     }
 
     /* terminates and joins thread
@@ -144,10 +149,7 @@ namespace otbw
         // stop process and join to main thread
         runStatus = false;
 
-        if (t1.joinable())
-        {
-            t1.join();
-        }
+        calcBandwidthThread.join();
 
         // convert bucket values into percentages
         int numberOfValues = 0;

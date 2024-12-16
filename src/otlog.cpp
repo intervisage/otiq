@@ -52,7 +52,7 @@ std::string getCurrentDate()
 
 void otlog::deleteAll()
 {
-    system("rm ./log_*"); 
+   system("rm ./log_* > /dev/null"); 
 }
 
 void otlog::log(std::string logMsg)

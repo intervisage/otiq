@@ -8,9 +8,7 @@
 #include "otlog.h"
 #include "otpp.h"
 
-
-
-uint64_t arriveCount=0;
+uint64_t arriveCount = 0;
 
 /**
  * A callback function for the async capture which is called each time a packet is captured
@@ -18,13 +16,11 @@ uint64_t arriveCount=0;
  */
 static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
 {
-	otbw::addByteCount(packet->getRawDataLen());
+	// otbw::addByteCount(packet->getRawDataLen());
 
 	arriveCount++;
 
 	otpp::processPacket(packet);
-	
-	
 }
 
 int main(int argc, char *argv[])
@@ -44,23 +40,41 @@ int main(int argc, char *argv[])
 	// remove previous logs *** TODO - remove this
 	otlog::deleteAll();
 
+	std::string databaseFile = "test.db";
+	
 	// open database
-	otdb::open("test.db");
+	if (otdb::open(databaseFile)!=0 ){
+		otlog::log("MAIN: Could not open database file ( " + databaseFile + " )");
+		return 1;
+	}
 
 	// IPv4 address of the interface we want to sniff
 	// std::string interfaceIPAddr = "192.168.56.10";
 
 	// find the interface by IP address
 	// pcpp::PcapLiveDevice *dev = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByIp(interfaceIPAddr);
+
 	pcpp::PcapLiveDevice *dev = pcpp::PcapLiveDeviceList::getInstance().getPcapLiveDeviceByName(monInterfaceName);
 	if (dev == NULL)
 	{
-		std::cerr << "Can't find monitoring interface '" << monInterfaceName << "'." << std::endl;
+
+		otlog::log("MAIN: Could not find monitoring interface ( " + monInterfaceName + " )");
+		std::cout << "Can't find monitoring interface '" << monInterfaceName << "'." << std::endl;
 		return 1;
 	}
 
+	// open the device before start capturing/sending packets
+	if (!dev->open())
+	{
+		otlog::log("MAIN: Could not open interface for monitorin ( " + monInterfaceName + " )");
+		std::cout << "Cannot open device" << std::endl;
+		return 1;
+	}
+
+
+	
 	// start bandwidth calculator
-	otbw::start();
+	//otbw::start();
 
 	// std::cout
 	// 	<< "Interface info:" << std::endl
@@ -76,13 +90,6 @@ int main(int argc, char *argv[])
 	// start process packet loop thread
 	otpp::start();
 
-	// open the device before start capturing/sending packets
-	if (!dev->open())
-	{
-		std::cerr << "Cannot open device" << std::endl;
-		return 1;
-	}
-
 	otlog::log("MAIN: Starting async traffic capture.");
 
 	// start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
@@ -91,7 +98,7 @@ int main(int argc, char *argv[])
 
 	// pause main thread
 	// pcpp::multiPlatformSleep(30);
-	sleep(10);
+	sleep(3600);
 
 	// stop capturing packets
 	dev->stopCapture();
@@ -99,18 +106,14 @@ int main(int argc, char *argv[])
 	otlog::log("MAIN: Async traffic capture stopped.");
 
 	// Stop calculating bandwidth
-	otbw::stop();
-
-	//*** otlog::log("MAIN: Packet processing loop stopped.");
+	//otbw::stop();
 
 	// tidy up process packet thread
 	otpp::stop();
 
-
 	std::cout << "Arrive Count = " << std::to_string(arriveCount) << std::endl;
 
-
-	//otbw::printBandwidths();
+	// otbw::printBandwidths();
 
 	// Save and close database
 	otdb::close();

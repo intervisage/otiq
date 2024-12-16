@@ -170,7 +170,7 @@ namespace otdb
                   "IP TEXT PRIMARY KEY,"
                   "FIRST_ACTIVITY INT DEFAULT 0,"
                   "LAST_ACTIVITY INT DEFAULT 0,"
-                  "MAC JSON DEFAULT '') WITHOUT ROWID;";    
+                  "MAC JSON DEFAULT '') WITHOUT ROWID;";
 
             // create bandwidth table
             sql += "CREATE TABLE BANDWIDTH("
@@ -239,9 +239,9 @@ namespace otdb
     /* Runs query after first clearing the reponse matrix  */
     int query(std::string queryString)
     {
-      
+
         clearResponseRows();
-     
+
         int rc = sqlite3_exec(db, queryString.c_str(), callback, 0, &error_message);
 
         if (rc != SQLITE_OK)
@@ -258,12 +258,12 @@ namespace otdb
     {
 
         // check bounds
-        if (row<0 | row> rows.size() - 1)
+        if (row < 0 || (row > rows.size() - 1))
         {
             return "";
         }
 
-        if (colIndex<0 | colIndex> rows[row].size())
+        if (colIndex < 0 || colIndex > rows[row].size())
         {
             return "";
         }
@@ -276,7 +276,7 @@ namespace otdb
     {
 
         // check bounds
-        if (row<0 | row> rows.size() - 1)
+        if (row < 0 || (row > rows.size() - 1))
         {
             return "";
         }
