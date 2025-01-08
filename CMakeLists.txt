@@ -8,6 +8,17 @@ message("Creating make file for project " ${PROJECT_NAME})
 # Set C++11
 set(CMAKE_CXX_STANDARD 11)
 
+# Set default build type to Debug if not specified
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+# Add flags for the Debug configuration
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -g -O0")
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 
 # flags for gprof
 #message("Compiling and linking flags set for gprof")

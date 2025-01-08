@@ -60,5 +60,6 @@
         "typeinfo": "cpp",
         "condition_variable": "cpp",
         "mutex": "cpp"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

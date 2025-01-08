@@ -73,85 +73,85 @@ CMakeFiles/otiq.dir/src/main.cpp.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/main.cpp.o: ../src/main.cpp
 CMakeFiles/otiq.dir/src/main.cpp.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/otiq.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/main.cpp.o -MF CMakeFiles/otiq.dir/src/main.cpp.o.d -o CMakeFiles/otiq.dir/src/main.cpp.o -c /home/paul/otiq/src/main.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/main.cpp.o -MF CMakeFiles/otiq.dir/src/main.cpp.o.d -o CMakeFiles/otiq.dir/src/main.cpp.o -c /home/paul/otiq/src/main.cpp
 
 CMakeFiles/otiq.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/otiq.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/main.cpp > CMakeFiles/otiq.dir/src/main.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/main.cpp > CMakeFiles/otiq.dir/src/main.cpp.i
 
 CMakeFiles/otiq.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/otiq.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/main.cpp -o CMakeFiles/otiq.dir/src/main.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/main.cpp -o CMakeFiles/otiq.dir/src/main.cpp.s
 
 CMakeFiles/otiq.dir/src/sqlite3.c.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/sqlite3.c.o: ../src/sqlite3.c
 CMakeFiles/otiq.dir/src/sqlite3.c.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/otiq.dir/src/sqlite3.c.o"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/sqlite3.c.o -MF CMakeFiles/otiq.dir/src/sqlite3.c.o.d -o CMakeFiles/otiq.dir/src/sqlite3.c.o -c /home/paul/otiq/src/sqlite3.c
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/sqlite3.c.o -MF CMakeFiles/otiq.dir/src/sqlite3.c.o.d -o CMakeFiles/otiq.dir/src/sqlite3.c.o -c /home/paul/otiq/src/sqlite3.c
 
 CMakeFiles/otiq.dir/src/sqlite3.c.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing C source to CMakeFiles/otiq.dir/src/sqlite3.c.i"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/paul/otiq/src/sqlite3.c > CMakeFiles/otiq.dir/src/sqlite3.c.i
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -E /home/paul/otiq/src/sqlite3.c > CMakeFiles/otiq.dir/src/sqlite3.c.i
 
 CMakeFiles/otiq.dir/src/sqlite3.c.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling C source to assembly CMakeFiles/otiq.dir/src/sqlite3.c.s"
-	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/paul/otiq/src/sqlite3.c -o CMakeFiles/otiq.dir/src/sqlite3.c.s
+	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -S /home/paul/otiq/src/sqlite3.c -o CMakeFiles/otiq.dir/src/sqlite3.c.s
 
 CMakeFiles/otiq.dir/src/otlog.cpp.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/otlog.cpp.o: ../src/otlog.cpp
 CMakeFiles/otiq.dir/src/otlog.cpp.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/otiq.dir/src/otlog.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otlog.cpp.o -MF CMakeFiles/otiq.dir/src/otlog.cpp.o.d -o CMakeFiles/otiq.dir/src/otlog.cpp.o -c /home/paul/otiq/src/otlog.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otlog.cpp.o -MF CMakeFiles/otiq.dir/src/otlog.cpp.o.d -o CMakeFiles/otiq.dir/src/otlog.cpp.o -c /home/paul/otiq/src/otlog.cpp
 
 CMakeFiles/otiq.dir/src/otlog.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/otiq.dir/src/otlog.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otlog.cpp > CMakeFiles/otiq.dir/src/otlog.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otlog.cpp > CMakeFiles/otiq.dir/src/otlog.cpp.i
 
 CMakeFiles/otiq.dir/src/otlog.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/otiq.dir/src/otlog.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otlog.cpp -o CMakeFiles/otiq.dir/src/otlog.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otlog.cpp -o CMakeFiles/otiq.dir/src/otlog.cpp.s
 
 CMakeFiles/otiq.dir/src/otdb.cpp.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/otdb.cpp.o: ../src/otdb.cpp
 CMakeFiles/otiq.dir/src/otdb.cpp.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/otiq.dir/src/otdb.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otdb.cpp.o -MF CMakeFiles/otiq.dir/src/otdb.cpp.o.d -o CMakeFiles/otiq.dir/src/otdb.cpp.o -c /home/paul/otiq/src/otdb.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otdb.cpp.o -MF CMakeFiles/otiq.dir/src/otdb.cpp.o.d -o CMakeFiles/otiq.dir/src/otdb.cpp.o -c /home/paul/otiq/src/otdb.cpp
 
 CMakeFiles/otiq.dir/src/otdb.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/otiq.dir/src/otdb.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otdb.cpp > CMakeFiles/otiq.dir/src/otdb.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otdb.cpp > CMakeFiles/otiq.dir/src/otdb.cpp.i
 
 CMakeFiles/otiq.dir/src/otdb.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/otiq.dir/src/otdb.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otdb.cpp -o CMakeFiles/otiq.dir/src/otdb.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otdb.cpp -o CMakeFiles/otiq.dir/src/otdb.cpp.s
 
 CMakeFiles/otiq.dir/src/otbw.cpp.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/otbw.cpp.o: ../src/otbw.cpp
 CMakeFiles/otiq.dir/src/otbw.cpp.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/otiq.dir/src/otbw.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otbw.cpp.o -MF CMakeFiles/otiq.dir/src/otbw.cpp.o.d -o CMakeFiles/otiq.dir/src/otbw.cpp.o -c /home/paul/otiq/src/otbw.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otbw.cpp.o -MF CMakeFiles/otiq.dir/src/otbw.cpp.o.d -o CMakeFiles/otiq.dir/src/otbw.cpp.o -c /home/paul/otiq/src/otbw.cpp
 
 CMakeFiles/otiq.dir/src/otbw.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/otiq.dir/src/otbw.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otbw.cpp > CMakeFiles/otiq.dir/src/otbw.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otbw.cpp > CMakeFiles/otiq.dir/src/otbw.cpp.i
 
 CMakeFiles/otiq.dir/src/otbw.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/otiq.dir/src/otbw.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otbw.cpp -o CMakeFiles/otiq.dir/src/otbw.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otbw.cpp -o CMakeFiles/otiq.dir/src/otbw.cpp.s
 
 CMakeFiles/otiq.dir/src/otpp.cpp.o: CMakeFiles/otiq.dir/flags.make
 CMakeFiles/otiq.dir/src/otpp.cpp.o: ../src/otpp.cpp
 CMakeFiles/otiq.dir/src/otpp.cpp.o: CMakeFiles/otiq.dir/compiler_depend.ts
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/otiq.dir/src/otpp.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otpp.cpp.o -MF CMakeFiles/otiq.dir/src/otpp.cpp.o.d -o CMakeFiles/otiq.dir/src/otpp.cpp.o -c /home/paul/otiq/src/otpp.cpp
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/otiq.dir/src/otpp.cpp.o -MF CMakeFiles/otiq.dir/src/otpp.cpp.o.d -o CMakeFiles/otiq.dir/src/otpp.cpp.o -c /home/paul/otiq/src/otpp.cpp
 
 CMakeFiles/otiq.dir/src/otpp.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/otiq.dir/src/otpp.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otpp.cpp > CMakeFiles/otiq.dir/src/otpp.cpp.i
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/paul/otiq/src/otpp.cpp > CMakeFiles/otiq.dir/src/otpp.cpp.i
 
 CMakeFiles/otiq.dir/src/otpp.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/otiq.dir/src/otpp.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otpp.cpp -o CMakeFiles/otiq.dir/src/otpp.cpp.s
+	/usr/bin/g++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/paul/otiq/src/otpp.cpp -o CMakeFiles/otiq.dir/src/otpp.cpp.s
 
 # Object files for target otiq
 otiq_OBJECTS = \

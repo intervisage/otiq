@@ -1,0 +1,152 @@
+To create a class that adds shared pointers to raw packets received from the network into a shared std::deque, which can be accessed by multiple processing threads, you'll need to carefully manage synchronization. Specifically, you should use a thread-safe approach for managing the shared std::deque since multiple threads will be interacting with it.
+
+Here's how you can structure this class:
+Key Concepts:
+
+    Shared Pointer (std::shared_ptr): This will be used to manage the ownership of packets so that they can be shared safely across multiple threads.
+    std::deque: This will store the packets. It's a good choice because it allows fast insertion at both ends and provides a flexible way to manage packet buffers.
+    Thread Synchronization: You'll use std::mutex or std::shared_mutex to synchronize access to the shared std::deque.
+    PcapLiveDevice: To capture packets from a network interface.
+    Processing Threads: Multiple threads will process the packets from the deque.
+
+Example Implementation
+
+#include <iostream>
+#include <queue>
+#include <deque>
+#include <memory>
+#include <thread>
+#include <mutex>
+#include <chrono>
+#include "PcapLiveDevice.h"
+#include "Packet.h"
+
+class PacketQueue {
+public:
+    // Shared deque of packets, accessed by multiple threads
+    std::deque<std::shared_ptr<pcpp::RawPacket>> packetDeque;
+    
+    // Mutex to synchronize access to the deque
+    std::mutex dequeMutex;
+
+    // Method to add packet to the deque
+    void addPacket(std::shared_ptr<pcpp::RawPacket> packet) {
+        std::lock_guard<std::mutex> lock(dequeMutex);
+        packetDeque.push_back(packet);
+    }
+
+    // Method to get and remove a packet from the deque
+    std::shared_ptr<pcpp::RawPacket> getPacket() {
+        std::lock_guard<std::mutex> lock(dequeMutex);
+        if (packetDeque.empty()) {
+            return nullptr;
+        }
+        auto packet = packetDeque.front();
+        packetDeque.pop_front();
+        return packet;
+    }
+
+    // Method to check if there are packets available
+    bool hasPackets() {
+        std::lock_guard<std::mutex> lock(dequeMutex);
+        return !packetDeque.empty();
+    }
+};
+
+// Callback function to capture packets and add them to the queue
+void packetReceivedCallback(pcpp::RawPacket* rawPacket, pcpp::PcapLiveDevice* dev, void* userData) {
+    // Convert RawPacket to shared_ptr and add it to the shared packet queue
+    auto packet = std::make_shared<pcpp::RawPacket>(*rawPacket);
+    PacketBuffer* buffer = reinterpret_cast<PacketBUffer*>(userData);
+    buffer->addPacket(packet);
+    std::cout << "Packet captured and added to queue!" << std::endl;
+}
+
+
+
+// Function to start capturing packets from the network interface
+void startPacketCapture(PacketQueue* queue) {
+    // Get the list of available live devices
+    pcpp::PcapLiveDeviceList& devList = pcpp::PcapLiveDeviceList::getInstance();
+    
+    // Find the device by IP address or device name
+    pcpp::PcapLiveDevice* dev = devList.getPcapLiveDeviceByIp("192.168.1.1"); // Replace with your network interface IP
+    if (dev == nullptr) {
+        std::cerr << "Device not found!" << std::endl;
+        return;
+    }
+
+    // Open the device for packet capture
+    if (!dev->open()) {
+        std::cerr << "Error opening device for capture!" << std::endl;
+        return;
+    }
+
+    // Start the capture with a callback function to handle each packet
+    dev->startCapture(packetReceivedCallback, queue);
+
+    std::cout << "Packet capture started..." << std::endl;
+
+    // Let it run for a while (e.g., 10 seconds) to capture some packets
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+
+    // Stop the capture
+    dev->stopCapture();
+    dev->close();
+    std::cout << "Capture stopped." << std::endl;
+}
+
+int main() {
+    // Create a shared packet queue
+    PacketQueue packetQueue;
+
+    // Start packet capture in a separate thread
+    std::thread captureThread(startPacketCapture, &packetQueue);
+
+    // Start multiple processing threads
+    std::thread processingThread1(processPackets, &packetQueue);
+    std::thread processingThread2(processPackets, &packetQueue);
+
+    // Join the threads (this example runs for 10 seconds)
+    captureThread.join();
+    processingThread1.join();
+    processingThread2.join();
+
+    return 0;
+}
+
+Key Concepts and Code Breakdown:
+
+    PacketQueue Class:
+        The PacketQueue class contains a shared std::deque of std::shared_ptr<pcpp::RawPacket>.
+        The addPacket method adds a shared pointer to a packet into the deque.
+        The getPacket method retrieves and removes a packet from the deque.
+        hasPackets checks if the queue contains any packets.
+
+    Thread Synchronization:
+        The std::mutex dequeMutex is used to protect access to the std::deque to ensure that multiple threads can safely add and retrieve packets.
+        The std::lock_guard<std::mutex> is used to automatically lock and unlock the mutex, ensuring that the deque is thread-safe.
+
+    Packet Capture Callback:
+        The packetReceivedCallback function is called whenever a packet is received. It creates a std::shared_ptr to the raw packet and adds it to the PacketQueue instance.
+
+    Packet Processing:
+        The processPackets function is run in multiple threads to process the packets. Each thread continuously checks if there are any packets in the queue and processes them.
+
+    Multiple Threads:
+        The packet capture and packet processing are run in separate threads. The capture thread captures packets from the network, and the processing threads handle packets concurrently.
+
+    Capture Duration:
+        The capture is set to run for 10 seconds in this example. You can adjust this or use a different mechanism to control the capture duration.
+
+Thread Safety Considerations:
+
+    Mutexes: Since the std::deque is shared between multiple threads, we use a std::mutex to synchronize access to the deque. This prevents race conditions when multiple threads are adding or removing packets.
+    Shared Pointers: std::shared_ptr ensures that the packets are properly managed and that multiple threads can share ownership of the packet without causing memory issues.
+
+Enhancements:
+
+    Error Handling: You might want to improve error handling, such as checking whether the device is successfully opened or if packets are successfully captured.
+    Graceful Shutdown: In a production system, you might want to gracefully stop the capture and processing threads, such as by using a condition variable or a flag to indicate when to exit the loops.
+
+This approach allows for efficient and thread-safe processing of packets in real-time using PcapPlusPlus and C++ standard libraries.

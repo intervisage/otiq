@@ -5,6 +5,7 @@
 #include <EthLayer.h>
 #include <ArpLayer.h>
 #include <SystemUtils.h>
+#include <sstream>
 #include <thread>
 #include <mutex>
 #include <pthread.h>
@@ -15,34 +16,45 @@
 #include <atomic>
 #include <deque>
 #include <map>
+#include <Packet.h>
+#include <PcapLiveDeviceList.h>
+#include <sstream>
 
 #include "otpp.h"
 #include "otbw.h"
 #include "otlog.h"
+#include "otdb.h"
+#include "otpbuff.h"
 
 enum bufferOpTypes
 {
 	PUSH,
-	POP
+	POP,
+	DELETE
 };
 
-pcpp::RawPacket *pktBufferOps(bufferOpTypes bufferOp, pcpp::RawPacket *packet);
-
-void processPacketThread();
+void processPacket();
 
 int updateActiveAsset(std::string ipv4Addr, std::string macAddr = "", otdb::MacInfo macInfo = otdb::none);
 
 int updateInactiveAsset(std::string ipv4Addr);
 
-std::deque<pcpp::RawPacket *> pktBuffer;
+struct assetStruct
+{
+	uint64_t lastActivity;
+	uint64_t macAddress;
+	bool macFromArp;
+};
 
-std::map<uint64_t,uint64_t> ipList;
-
+std::map<uint64_t, assetStruct *> AssetList;
+PacketBuffer pBuffer;
 
 std::thread processPacketThreadPtr_1;
 std::thread processPacketThreadPtr_2;
-pcpp::RawPacket *receivedPacket;
-std::mutex pktBufferOpMutex;
+std::thread processPacketThreadPtr_3;
+
+pcpp::RawPacket *receivedRawPacket;
+std::mutex parserMutex;
 
 std::condition_variable pp_cv;
 
@@ -53,7 +65,6 @@ uint64_t pushCount;
 uint64_t popCount;
 uint64_t dropCount;
 uint64_t maxpktsQueued;
-uint64_t pktsQueued;
 
 static std::atomic<bool> runThread;
 bool terminateThread;
@@ -61,7 +72,7 @@ bool terminateThread;
 namespace otpp
 {
 
-	void start()
+	void start(pcpp::PcapLiveDevice *dev)
 	{
 
 		// initialise shared running status with locked
@@ -71,7 +82,6 @@ namespace otpp
 		maxExTime = 0;
 		totalExecutionTime = 0;
 		maxpktsQueued = 0;
-		pktsQueued = 0;
 
 		runThread = false;
 		pushCount = 0;
@@ -79,52 +89,67 @@ namespace otpp
 		dropCount = 0;
 
 		terminateThread = false;
+		receivedRawPacket = nullptr;
 
-		processPacketThreadPtr_1 = std::thread(processPacketThread);
+		// start packet capture thread
+		otlog::log("OTPP: Starting async traffic capture.");
+		dev->startCapture(otpp::onPacketArrives, &pBuffer);
+
+		// start packet consumer thread 1
+		processPacketThreadPtr_1 = std::thread(processPacket);
 		std::string threadName1 = "otiq-otpp-1";
 		pthread_setname_np(processPacketThreadPtr_1.native_handle(), threadName1.c_str());
 
-		// processPacketThreadPtr_2 = std::thread(processPacketThread);
-		// std::string threadName2 = "otiq-otpp-2";
-		// pthread_setname_np(processPacketThreadPtr_2.native_handle(), threadName2.c_str());
+		// start packet consumer thread 2
+		processPacketThreadPtr_2 = std::thread(processPacket);
+		std::string threadName2 = "otiq-otpp-2";
+		pthread_setname_np(processPacketThreadPtr_2.native_handle(), threadName2.c_str());
 
-		otlog::log("OTPP: Packet processing loop initiated ( not running ).");
-		otlog::log("Maximum packet buffer size supported = " + std::to_string(pktBuffer.max_size()));
-		// mtx.unlock();
+		// // start packet consumer thread 3
+		processPacketThreadPtr_3 = std::thread(processPacket);
+		std::string threadName3 = "otiq-otpp-3";
+		pthread_setname_np(processPacketThreadPtr_3.native_handle(), threadName3.c_str());
 	}
 
-	void stop()
+	void stop(pcpp::PcapLiveDevice *dev)
 	{
 
-		// signal thread to stop
+		// stop packet capture thread
+		dev->stopCapture();
+		otlog::log("OTPP: Async traffic capture stopped.");
+
+		// signal processing thread to stop
 		terminateThread = true;
-		otlog::log("OTPP: Terminating packet processing loop.");
 
 		// Monitor time taken to process packets in buffer after terminate signal passed
-		auto clearoutStart = std::chrono::high_resolution_clock::now();
-		uint64_t clearoutPackets = pktsQueued;
+		// auto clearoutStart = std::chrono::high_resolution_clock::now();
 
 		// wait for thread to return
 		processPacketThreadPtr_1.join();
-		// processPacketThreadPtr_2.join();
+		processPacketThreadPtr_2.join();
+		processPacketThreadPtr_3.join();
 
-		auto clearoutStop = std::chrono::high_resolution_clock::now();
+		otlog::log("OTPP: Process Loops terminated.");
 
-		uint64_t clearoutTime = std::chrono::duration_cast<std::chrono::seconds>(clearoutStop - clearoutStart).count();
+		// auto clearoutStop = std::chrono::high_resolution_clock::now();
 
-		otlog::log("OTPP: Buffer clearout packets = " + std::to_string(clearoutPackets));
-		otlog::log("OTPP: Buffer clearout time (seconds) = " + std::to_string(clearoutTime));
+		// uint64_t clearoutTime = std::chrono::duration_cast<std::chrono::seconds>(clearoutStop - clearoutStart).count();
 
-		// clear buffer - this will delete packet instances through use of unique_ptrs
-		if (pktBuffer.size() != 0)
+		// otlog::log("OTPP: Buffer clearout packets = " + std::to_string(clearoutPackets));
+		// otlog::log("OTPP: Buffer clearout time (seconds) = " + std::to_string(clearoutTime));
+
+		// // clear buffer - this will delete packet instances through use of unique_ptrs
+		if (pBuffer.getSize() != 0)
 		{
-			otlog::log("OTPP: WARNING - Packets left in buffer!!!");
+			otlog::log("OTPP: WARNING - Packets left in buffer!!!  " + std::to_string(pBuffer.getSize()));
 		}
 		else
 		{
 			otlog::log("OTPP: No remaining packets in buffer.");
 		}
-		pktBuffer.clear();
+		// buffer.clear();
+
+		// move assets from map to database
 
 		/* EXECUTION TIMING */
 
@@ -132,188 +157,250 @@ namespace otpp
 		std::cout << "Max Execution time (nano seconds) = " << std::to_string(maxExTime) << std::endl;
 		std::cout << "Min Execution time (nano seconds) = " << std::to_string(minExTime) << std::endl;
 		std::cout << "Avg Execution time (nano seconds) = " << std::to_string(avgExeTime) << std::endl;
-		std::cout << "Maximum buffer size = " << std::to_string(maxpktsQueued) << std::endl;
-		std::cout << "Push Count = " << std::to_string(pushCount) << std::endl;
-		std::cout << "Pop Count = " << std::to_string(popCount) << std::endl;
-		std::cout << "Drop Packet Count = " << std::to_string(dropCount) << std::endl;
+		std::cout << "Maximum buffer size = " << std::to_string(pBuffer.getMaxQueueSize()) << std::endl;
+		std::cout << "Push Count = " << std::to_string(pBuffer.getPushCount()) << std::endl;
+		std::cout << "Pop Count = " << std::to_string(pBuffer.getPopCount()) << std::endl;
+		std::cout << "Drop Packet Count = " << std::to_string(pBuffer.getDropCount()) << std::endl;
+		std::cout << "Asset list size = " << std::to_string(AssetList.size()) << std::endl;
 	}
 
-	void processPacket(pcpp::RawPacket *packet)
+	// Note that onPacketArrives is called from a separate PCapPlusPlus thread - so need to pass pointer to buffer
+	void onPacketArrives(pcpp::RawPacket *rawPacket, pcpp::PcapLiveDevice *dev, void *userData)
 	{
+		// Convert RawPacket to unique_ptr and add it to the shared packet queue
+		// std::unique_ptr<pcpp::RawPacket> copyOfpacket = std::unique_ptr<pcpp::RawPacket>(*rawPacket);
 
-		// add packet to buffer unless tthread is being terminated.
-		if (!terminateThread)
-		{
-			pktBufferOps(PUSH, packet);
-		}
-	}
+		pcpp::RawPacket *newRawPacket = new pcpp::RawPacket(*rawPacket);
+		std::unique_ptr<pcpp::RawPacket> packet(newRawPacket);
 
-}
+		// pcpp::RawPacket* copy = packet.release();
+		// std::ostringstream threadID;
+		// threadID << std::this_thread::get_id();
+		// std::cout << "RawPacket Pointer = " << copy << " Thread ID = " << threadID.str() << std::endl;
 
-/* ensures all buffer operations are protected by lock.
-bufferOp: type of operation. packet:
-RawPacket to be inserted during push operation.
-return null pointer for all push opperations.
-returns RawPacket for pop operations or null ptr if no packetes in buffer */
-
-pcpp::RawPacket *pktBufferOps(bufferOpTypes bufferOp, pcpp::RawPacket *packet)
-{
-
-	// std::cout << "Packet in buffer = " << pktsQueued << std::endl;
-
-	// lock this code - note lock will be released on return ( lock goes out of scope)
-	std::unique_lock<std::mutex> pkBufferOpLock(pktBufferOpMutex);
-
-	if (bufferOp == PUSH)
-	{
-
+		PacketBuffer *pBuffer = reinterpret_cast<PacketBuffer *>(userData);
+		pBuffer->addPacket(std::move(packet));
 		pushCount++;
-
-		// enforce limit on buffer size //TODO - need to consider how this limit is set.
-		if (pktsQueued < 100000000)
-		{
-			// instatiate new unique packet pointer with passed rawpacket pointer.
-			pktBuffer.push_back(new pcpp::RawPacket(*packet));
-
-			// increment buffer size
-			pktsQueued++;
-
-			// update max buffer size
-			if (pktsQueued > maxpktsQueued)
-			{
-				maxpktsQueued = pktsQueued;
-			}
-		}
-		else
-		{
-			// otbw::incDropPacketCount();
-			dropCount++;
-		}
-
-		// always return null ptr when inserting
-		return nullptr;
 	}
 
-	if (bufferOp == POP)
-	{
-
-		// check there are packets left to pop
-		if (pktBuffer.size() == 0)
-		{
-			return nullptr;
-		}
-		else
-		{
-
-			// get first item
-			pcpp::RawPacket *returnPacket = pktBuffer.front();
-
-			// remove first item
-			pktBuffer.pop_front();
-
-			// decrement count of packets to be processed
-			pktsQueued--;
-
-			// return what was the first packet in the buffer
-			return returnPacket;
-		}
-	}
-	// catch all return null pointer.
-	return nullptr;
 }
 
-// Called from main to process packets as they arrive
-void processPacketThread()
+void processPacket()
 {
+
+	pcpp::RawPacket *rawPacket;
+	pcpp::Packet *packet;
 
 	while (!terminateThread)
 	{
-		pcpp::RawPacket *receivedPacket;
 
-		while ((receivedPacket = pktBufferOps(POP, nullptr)) != nullptr)
+		while (!pBuffer.hasPackets())
 		{
 
+			{
+				std::lock_guard<std::mutex> lock(parserMutex);
+
+				rawPacket = pBuffer.getPacket().release();
+				// std::ostringstream threadID;
+				// threadID << std::this_thread::get_id();
+				// std::cout << "RawPacket Pointer = " << rawPacket << " Thread ID = " << threadID.str() << std::endl;
+
+				packet = new pcpp::Packet(rawPacket);
+			}
+
+			// if (rawPacket.get()->getRawData() != nullptr && rawPacket.get()->getRawDataLen() > 0)
+			// {
+			// 	pcpp::Packet parsedPacket(rawPacket.get);
+			// }
+			// else
+			// {
+			// 	std::cerr << "Invalid RawPacket!" << std::endl;
+			// }
+
+			// std::cout << "Processing packet with length: " << rawPacket->getRawDataLen() << std::endl;
+			// bool ipv4 = packet->isPacketOfType(pcpp::TCP);
 			popCount++;
 
-			auto start = std::chrono::high_resolution_clock::now();
+			// create parsed packet with all layers.
+			// pcpp::Packet packet(rawPacket.get());
 
-			pcpp::Packet parsedPacket(receivedPacket);
-
-			// process thread
-			std::string queryString = "";
-			char *error_message = 0;
-			int rc = 0;
-
-			// parse raw packet
-
-			pcpp::EthLayer *ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
+			// 			std::string queryString = "";
+			// 			char *error_message = 0;
+			// 			int rc = 0;
 
 			// check if valid eternet II packet and stop processing if not
 			// TODO - Add Support for IEEE 802.3 ?????????????????????????????????
-
-			if (ethernetLayer == nullptr)
-			{
-				// no futher processing required - so continue
-				continue;
-			}
-
-			// don't process communications between MacBook and Virtual Machine
-			// pcpp::MacAddress ubuntuMacAddress = pcpp::MacAddress("08:00:27:54:a5:55");
-			// pcpp::MacAddress macBookMacAddress = pcpp::MacAddress("3a:f9:d3:16:91:64");
-			// pcpp::MacAddress srcMacAddr = ethernetLayer->getSourceMac();
-			// pcpp::MacAddress dstMacAddr = ethernetLayer->getDestMac();
-
-			// if (srcMacAddr == macBookMacAddress || dstMacAddr == macBookMacAddress || srcMacAddr == ubuntuMacAddress || dstMacAddr == ubuntuMacAddress)
+			// pcpp::EthLayer *ethernetLayer = packet.getLayerOfType<pcpp::EthLayer>();
+			// if (ethernetLayer == nullptr)
 			// {
-			// 	runThread = false;
+			// 	// no futher processing required
 			// 	continue;
 			// }
 
-			// // check if arp message
-			auto *arpLayer = parsedPacket.getLayerOfType<pcpp::ArpLayer>();
-			if (arpLayer != nullptr)
-			{
-				// note that sender is used by host requesting MAC address  and host responding with Mac address
-				updateActiveAsset(arpLayer->getSenderIpAddr().toString(), arpLayer->getSenderMacAddress().toString(), otdb::arp);
+			// 			// don't process communications between MacBook and Virtual Machine
+			// 			// pcpp::MacAddress ubuntuMacAddress = pcpp::MacAddress("08:00:27:54:a5:55");
+			// 			// pcpp::MacAddress macBookMacAddress = pcpp::MacAddress("3a:f9:d3:16:91:64");
+			// 			// pcpp::MacAddress srcMacAddr = ethernetLayer->getSourceMac();
+			// 			// pcpp::MacAddress dstMacAddr = ethernetLayer->getDestMac();
 
-				// no further processing of ARP message
-				continue;
-			}
+			// 			// if (srcMacAddr == macBookMacAddress || dstMacAddr == macBookMacAddress || srcMacAddr == ubuntuMacAddress || dstMacAddr == ubuntuMacAddress)
+			// 			// {
+			// 			// 	runThread = false;
+			// 			// 	continue;
+			// 			// }
+
+			// 			// // check if arp message
+			// 			// auto *arpLayer = parsedPacket.getLayerOfType<pcpp::ArpLayer>();
+			// 			// if (arpLayer != nullptr)
+			// 			// {
+			// 			// 	// note that sender is used by host requesting MAC address  and host responding with Mac address
+			// 			// 	//updateActiveAsset(arpLayer->getSenderIpAddr().toString(), arpLayer->getSenderMacAddress().toString(), otdb::arp);
+
+			// 			// 	// no further processing of ARP message
+			// 			// 	continue;
+			// 			// }
 
 			// check if IPv4
-			pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
 
-			if (parsedPacket.isPacketOfType(pcpp::IPv4))
+			if (packet->isPacketOfType(pcpp::IPv4))
 			{
-				pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+				pcpp::IPv4Layer *ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
+				uint64_t ipv4AddrInt = ipv4Layer->getSrcIPv4Address().toInt();
+				if (AssetList.find(ipv4AddrInt) == AssetList.end())
+				{
+					// no entry for this ip address exists so add ip address and empty
+					AssetList.insert({ipv4AddrInt, new assetStruct()});
+				}
 
-				// get sources address as string
-				updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
+				// 				// get sources address as string
+				// 				// updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
 
-				// updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
+				// 				// updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
+				// 			}
 			}
 
-			/* EXECUTION TIMING */
+			// delete packet popped from buffer  - not ncessary - when parsed packet goes out of scop on each while - rawpacket is deleted.
 
-			auto stop = std::chrono::high_resolution_clock::now();
-
-			uint64_t timeTaken = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
-
-			totalExecutionTime += timeTaken;
-
-			// update process time metrics
-			if (timeTaken < minExTime)
 			{
-				minExTime = timeTaken;
-			}
-
-			if (timeTaken > maxExTime)
-			{
-				maxExTime = timeTaken;
+				std::lock_guard<std::mutex> lock(parserMutex);
+				// delete packet;
+				delete packet;
+				delete rawPacket;
 			}
 		}
 	}
 }
+
+// Called from main to process packets as they arrive
+
+// 	while (!terminateThread)
+// 	{
+// 		pcpp::RawPacket *recivedRawPacket = nullptr;
+
+// 		while (!pBuffer.isEmpty())
+// 		{
+// 			// receivedRawPacket = pBuffer.dequeue();
+
+// 			/* show which thread has popped */
+// 			std::ostringstream threadID;
+// 			threadID << std::this_thread::get_id();
+// 			std::cout << receivedRawPacket << " receivedRawPacket Pointer, Thread = " << threadID.str() << std::endl;
+
+// 			// std::cout << " terminateThread = " << std::to_string(terminateThread) << ", buffer size = " << std::to_string(pBuffer.size()) << std::endl;
+
+// 			popCount++;
+
+// 			auto start = std::chrono::high_resolution_clock::now();
+
+// 			// create parsed packet with all layers. Note - freeRawPacket is set to true to raw packet is deleted when parsedPacket is deleted on out of scope
+// 			pcpp::Packet parsedPacket(receivedRawPacket);
+
+// 			// process thread
+// 			std::string queryString = "";
+// 			char *error_message = 0;
+// 			int rc = 0;
+
+// 			// parse raw packet
+
+// 			pcpp::EthLayer *ethernetLayer = parsedPacket.getLayerOfType<pcpp::EthLayer>();
+
+// 			// check if valid eternet II packet and stop processing if not
+// 			// TODO - Add Support for IEEE 802.3 ?????????????????????????????????
+
+// 			// if (ethernetLayer == nullptr)
+// 			// {
+// 			// 	// no futher processing required - so free up raw packet and continue
+// 			// 	receivedRawPacket->clear();
+// 			// 	std::cout << "HERE!!!!" << std::endl;
+// 			// 	break;
+// 			// }
+
+// 			// don't process communications between MacBook and Virtual Machine
+// 			// pcpp::MacAddress ubuntuMacAddress = pcpp::MacAddress("08:00:27:54:a5:55");
+// 			// pcpp::MacAddress macBookMacAddress = pcpp::MacAddress("3a:f9:d3:16:91:64");
+// 			// pcpp::MacAddress srcMacAddr = ethernetLayer->getSourceMac();
+// 			// pcpp::MacAddress dstMacAddr = ethernetLayer->getDestMac();
+
+// 			// if (srcMacAddr == macBookMacAddress || dstMacAddr == macBookMacAddress || srcMacAddr == ubuntuMacAddress || dstMacAddr == ubuntuMacAddress)
+// 			// {
+// 			// 	runThread = false;
+// 			// 	continue;
+// 			// }
+
+// 			// // check if arp message
+// 			// auto *arpLayer = parsedPacket.getLayerOfType<pcpp::ArpLayer>();
+// 			// if (arpLayer != nullptr)
+// 			// {
+// 			// 	// note that sender is used by host requesting MAC address  and host responding with Mac address
+// 			// 	//updateActiveAsset(arpLayer->getSenderIpAddr().toString(), arpLayer->getSenderMacAddress().toString(), otdb::arp);
+
+// 			// 	// no further processing of ARP message
+// 			// 	continue;
+// 			// }
+
+// 			// check if IPv4
+// 			pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+
+// 			if (parsedPacket.isPacketOfType(pcpp::IPv4))
+// 			{
+// 				pcpp::IPv4Layer *ipv4Layer = parsedPacket.getLayerOfType<pcpp::IPv4Layer>();
+// 				uint64_t ipv4AddrInt = ipv4Layer->getSrcIPv4Address().toInt();
+// 				if (AssetList.find(ipv4AddrInt) == AssetList.end())
+// 				{
+// 					// no entry for this ip address exists so add ip address and empty
+// 					AssetList.insert({ipv4AddrInt, new assetStruct()});
+// 				}
+
+// 				// get sources address as string
+// 				// updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
+
+// 				// updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
+// 			}
+
+// 			/* EXECUTION TIMING */
+
+// 			auto stop = std::chrono::high_resolution_clock::now();
+
+// 			uint64_t timeTaken = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start).count();
+
+// 			totalExecutionTime += timeTaken;
+
+// 			// update process time metrics
+// 			if (timeTaken < minExTime)
+// 			{
+// 				minExTime = timeTaken;
+// 			}
+
+// 			if (timeTaken > maxExTime)
+// 			{
+// 				maxExTime = timeTaken;
+// 			}
+
+// 			// get rid of instance
+// 			pBuffer.clear(receivedRawPacket);
+// 		}
+// 	}
+// }
 
 /* Adds asset to database if not alreaded added, otherwise updates asset, including time stamps
 ipv4 - IP V4 Address as string value
@@ -345,12 +432,10 @@ int updateActiveAsset(std::string ipv4Addr, std::string macAddr, otdb::MacInfo m
 	if (otdb::resultValue(0, 0) == "0")
 	{
 
-	// 	// // asset is not in table so insert
+		// 	// // asset is not in table so insert
 		queryString = "INSERT INTO ASSETS (IP)";
 		// queryString += " VALUES (\"" + ipv4Addr + "\", " + timestampString + ", " + timestampString;
 		queryString += " VALUES (\"" + ipv4Addr + "\");";
-
-
 	}
 	// 	// add MAC data if passed
 	// 	// if (macInfo != otdb::none)

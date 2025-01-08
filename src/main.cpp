@@ -1,27 +1,14 @@
 #include <iostream>
 #include <SystemUtils.h>
-#include <Packet.h>
 #include <PcapLiveDeviceList.h>
 #include <unistd.h>
 
 #include "otbw.h"
 #include "otlog.h"
+#include "otdb.h"
 #include "otpp.h"
 
 uint64_t arriveCount = 0;
-
-/**
- * A callback function for the async capture which is called each time a packet is captured
- * TEST FOR GIT
- */
-static void onPacketArrives(pcpp::RawPacket *packet, pcpp::PcapLiveDevice *dev, void *cookie)
-{
-	// otbw::addByteCount(packet->getRawDataLen());
-
-	arriveCount++;
-
-	otpp::processPacket(packet);
-}
 
 int main(int argc, char *argv[])
 {
@@ -41,9 +28,10 @@ int main(int argc, char *argv[])
 	otlog::deleteAll();
 
 	std::string databaseFile = "test.db";
-	
+
 	// open database
-	if (otdb::open(databaseFile)!=0 ){
+	if (otdb::open(databaseFile) != 0)
+	{
 		otlog::log("MAIN: Could not open database file ( " + databaseFile + " )");
 		return 1;
 	}
@@ -71,47 +59,25 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-
-	
 	// start bandwidth calculator
-	//otbw::start();
+	// otbw::start();
 
-	// std::cout
-	// 	<< "Interface info:" << std::endl
-	// 	<< "   Interface name:        " << dev->getName() << std::endl			 // get interface name
-	// 	<< "   Interface description: " << dev->getDesc() << std::endl			 // get interface description
-	// 	<< "   MAC address:           " << dev->getMacAddress() << std::endl	 // get interface MAC address
-	// 	<< "   Default gateway:       " << dev->getDefaultGateway() << std::endl // get default gateway
-	// 	<< "   Interface MTU:         " << dev->getMtu() << std::endl;			 // get interface MTU
-
-	// if (dev->getDnsServers().size() > 0)
-	// 	std::cout << "   DNS server:            " << dev->getDnsServers().at(0) << std::endl;
-
-	// start process packet loop thread
-	otpp::start();
-
-	otlog::log("MAIN: Starting async traffic capture.");
+	// start packet capture and processing
+	otpp::start(dev);
 
 	// start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
 	// make sure database is open and in memory before this starts
-	dev->startCapture(onPacketArrives, NULL);
 
 	// pause main thread
-	// pcpp::multiPlatformSleep(30);
-	sleep(3600);
+	sleep(30);
 
-	// stop capturing packets
-	dev->stopCapture();
-
-	otlog::log("MAIN: Async traffic capture stopped.");
+	// stop packet capture and processing
+	otpp::stop(dev);
 
 	// Stop calculating bandwidth
-	//otbw::stop();
+	// otbw::stop();
 
-	// tidy up process packet thread
-	otpp::stop();
-
-	std::cout << "Arrive Count = " << std::to_string(arriveCount) << std::endl;
+	// std::cout << "Arrive Count = " << std::to_string(arriveCount) << std::endl;
 
 	// otbw::printBandwidths();
 
