@@ -7,11 +7,11 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus
 
-C_FLAGS = -g -g -O0
+C_FLAGS = -g
 
 CXX_DEFINES = 
 
 CXX_INCLUDES = -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus
 
-CXX_FLAGS = -g -g -O0 -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 

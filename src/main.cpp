@@ -27,6 +27,11 @@ int main(int argc, char *argv[])
 	// remove previous logs *** TODO - remove this
 	otlog::deleteAll();
 
+	// uint64_t pushCount = 94774038;
+	// uint64_t dropCountPush = 32367025;
+	// float avgDrop = static_cast<float>(dropCountPush) / (dropCountPush + pushCount);
+	// std::cout  << " average = " << std::to_string(avgDrop) << std::endl;
+
 	std::string databaseFile = "test.db";
 
 	// open database
@@ -69,7 +74,7 @@ int main(int argc, char *argv[])
 	// make sure database is open and in memory before this starts
 
 	// pause main thread
-	sleep(30);
+	sleep(180);
 
 	// stop packet capture and processing
 	otpp::stop(dev);

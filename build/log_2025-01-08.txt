@@ -1,5 +1,0 @@
-2025-01-08 09:17:16.795	OTDB: Found exiting database file ( test.db ).
-2025-01-08 09:17:16.796	OTDB: Using sqlite version 3.45.3
-2025-01-08 09:17:16.796	OTDB: Successfully loaded file-based database ( test.db ) into memory.
-2025-01-08 09:17:16.863	OTPP: Starting async traffic capture.
-2025-01-08 09:17:47.864	OTPP: Async traffic capture stopped.

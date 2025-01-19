@@ -1,32 +1,32 @@
 [
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -std=gnu++11 -o CMakeFiles/otiq.dir/src/main.cpp.o -c /home/paul/otiq/src/main.cpp",
+  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -std=gnu++11 -o CMakeFiles/otiq.dir/src/main.cpp.o -c /home/paul/otiq/src/main.cpp",
   "file": "/home/paul/otiq/src/main.cpp"
 },
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/gcc  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -o CMakeFiles/otiq.dir/src/sqlite3.c.o -c /home/paul/otiq/src/sqlite3.c",
+  "command": "/usr/bin/gcc  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -o CMakeFiles/otiq.dir/src/sqlite3.c.o -c /home/paul/otiq/src/sqlite3.c",
   "file": "/home/paul/otiq/src/sqlite3.c"
 },
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -std=gnu++11 -o CMakeFiles/otiq.dir/src/otlog.cpp.o -c /home/paul/otiq/src/otlog.cpp",
+  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -std=gnu++11 -o CMakeFiles/otiq.dir/src/otlog.cpp.o -c /home/paul/otiq/src/otlog.cpp",
   "file": "/home/paul/otiq/src/otlog.cpp"
 },
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -std=gnu++11 -o CMakeFiles/otiq.dir/src/otdb.cpp.o -c /home/paul/otiq/src/otdb.cpp",
+  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -std=gnu++11 -o CMakeFiles/otiq.dir/src/otdb.cpp.o -c /home/paul/otiq/src/otdb.cpp",
   "file": "/home/paul/otiq/src/otdb.cpp"
 },
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -std=gnu++11 -o CMakeFiles/otiq.dir/src/otbw.cpp.o -c /home/paul/otiq/src/otbw.cpp",
+  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -std=gnu++11 -o CMakeFiles/otiq.dir/src/otbw.cpp.o -c /home/paul/otiq/src/otbw.cpp",
   "file": "/home/paul/otiq/src/otbw.cpp"
 },
 {
   "directory": "/home/paul/otiq/build",
-  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -g -O0 -std=gnu++11 -o CMakeFiles/otiq.dir/src/otpp.cpp.o -c /home/paul/otiq/src/otpp.cpp",
+  "command": "/usr/bin/g++  -I/home/paul/otiq/include -isystem /home/paul/otiq/libs/pcapplusplus-23.09/include/pcapplusplus -g -std=gnu++11 -o CMakeFiles/otiq.dir/src/otpp.cpp.o -c /home/paul/otiq/src/otpp.cpp",
   "file": "/home/paul/otiq/src/otpp.cpp"
 }
 ]

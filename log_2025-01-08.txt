@@ -1,3 +1,0 @@
-2025-01-08 17:19:51.602	OTDB: Database file ( test.db ) not found.
-2025-01-08 17:19:51.603	OTDB: Using sqlite version 3.45.3
-2025-01-08 17:19:51.603	OTDB: In-memory database tables created successfully.

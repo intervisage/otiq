@@ -1,4 +1,0 @@
-2025-01-08 17:16:09.832	OTDB: Database file ( test.db ) not found.
-2025-01-08 17:16:09.833	OTDB: Using sqlite version 3.45.3
-2025-01-08 17:16:09.833	OTDB: In-memory database tables created successfully.
-2025-01-08 17:16:18.325	MAIN: Could not open interface for monitorin ( ens192 )

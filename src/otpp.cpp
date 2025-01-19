@@ -52,19 +52,14 @@ PacketBuffer pBuffer;
 std::thread processPacketThreadPtr_1;
 std::thread processPacketThreadPtr_2;
 std::thread processPacketThreadPtr_3;
+std::thread processPacketThreadPtr_4;
 
 pcpp::RawPacket *receivedRawPacket;
 std::mutex parserMutex;
 
-std::condition_variable pp_cv;
-
 uint64_t minExTime;
 uint64_t maxExTime;
 uint64_t totalExecutionTime;
-uint64_t pushCount;
-uint64_t popCount;
-uint64_t dropCount;
-uint64_t maxpktsQueued;
 
 static std::atomic<bool> runThread;
 bool terminateThread;
@@ -81,12 +76,11 @@ namespace otpp
 		minExTime = 100000000;
 		maxExTime = 0;
 		totalExecutionTime = 0;
-		maxpktsQueued = 0;
+		// maxpktsQueued = 0;
 
 		runThread = false;
-		pushCount = 0;
-		popCount = 0;
-		dropCount = 0;
+		// pushCount = 0;
+		// popCount = 0;
 
 		terminateThread = false;
 		receivedRawPacket = nullptr;
@@ -94,6 +88,10 @@ namespace otpp
 		// start packet capture thread
 		otlog::log("OTPP: Starting async traffic capture.");
 		dev->startCapture(otpp::onPacketArrives, &pBuffer);
+
+		// TODO - Delay for Testing
+		// sleep(10);
+		// std::cout << "---------------------------" << std::endl;
 
 		// start packet consumer thread 1
 		processPacketThreadPtr_1 = std::thread(processPacket);
@@ -105,10 +103,15 @@ namespace otpp
 		std::string threadName2 = "otiq-otpp-2";
 		pthread_setname_np(processPacketThreadPtr_2.native_handle(), threadName2.c_str());
 
-		// // start packet consumer thread 3
+		// start packet consumer thread 3
 		processPacketThreadPtr_3 = std::thread(processPacket);
 		std::string threadName3 = "otiq-otpp-3";
 		pthread_setname_np(processPacketThreadPtr_3.native_handle(), threadName3.c_str());
+
+		// start packet consumer thread 3
+		processPacketThreadPtr_4 = std::thread(processPacket);
+		std::string threadName4 = "otiq-otpp-4";
+		pthread_setname_np(processPacketThreadPtr_4.native_handle(), threadName4.c_str());
 	}
 
 	void stop(pcpp::PcapLiveDevice *dev)
@@ -128,6 +131,7 @@ namespace otpp
 		processPacketThreadPtr_1.join();
 		processPacketThreadPtr_2.join();
 		processPacketThreadPtr_3.join();
+		processPacketThreadPtr_4.join();
 
 		otlog::log("OTPP: Process Loops terminated.");
 
@@ -153,140 +157,100 @@ namespace otpp
 
 		/* EXECUTION TIMING */
 
-		uint64_t avgExeTime = pushCount == 0 ? 0 : totalExecutionTime / pushCount;
+		uint64_t avgExeTime = pBuffer.getPushCount() == 0 ? 0 : totalExecutionTime / pBuffer.getPushCount();
+		float avgDrop = static_cast<float>(pBuffer.getDropCountPush()) / (pBuffer.getDropCountPush() + pBuffer.getPushCount());
 		std::cout << "Max Execution time (nano seconds) = " << std::to_string(maxExTime) << std::endl;
 		std::cout << "Min Execution time (nano seconds) = " << std::to_string(minExTime) << std::endl;
 		std::cout << "Avg Execution time (nano seconds) = " << std::to_string(avgExeTime) << std::endl;
 		std::cout << "Maximum buffer size = " << std::to_string(pBuffer.getMaxQueueSize()) << std::endl;
 		std::cout << "Push Count = " << std::to_string(pBuffer.getPushCount()) << std::endl;
 		std::cout << "Pop Count = " << std::to_string(pBuffer.getPopCount()) << std::endl;
-		std::cout << "Drop Packet Count = " << std::to_string(pBuffer.getDropCount()) << std::endl;
+		std::cout << "Drop Packet Count Push = " << std::to_string(pBuffer.getDropCountPush()) << std::endl;
+		std::cout << "Drop Packet Percentage = " << std::to_string(avgDrop) << std::endl;
 		std::cout << "Asset list size = " << std::to_string(AssetList.size()) << std::endl;
 	}
 
 	// Note that onPacketArrives is called from a separate PCapPlusPlus thread - so need to pass pointer to buffer
 	void onPacketArrives(pcpp::RawPacket *rawPacket, pcpp::PcapLiveDevice *dev, void *userData)
 	{
-		// Convert RawPacket to unique_ptr and add it to the shared packet queue
-		// std::unique_ptr<pcpp::RawPacket> copyOfpacket = std::unique_ptr<pcpp::RawPacket>(*rawPacket);
+
+		// add atomic to avoid calling routine when routine is already processing
 
 		pcpp::RawPacket *newRawPacket = new pcpp::RawPacket(*rawPacket);
-		std::unique_ptr<pcpp::RawPacket> packet(newRawPacket);
+		pcpp::Packet packet(newRawPacket);
 
-		// pcpp::RawPacket* copy = packet.release();
 		// std::ostringstream threadID;
 		// threadID << std::this_thread::get_id();
-		// std::cout << "RawPacket Pointer = " << copy << " Thread ID = " << threadID.str() << std::endl;
+		// std::cout << "RawPacket Pointer = " << newRawPacket << " Thread ID = " << threadID.str() << std::endl;
 
 		PacketBuffer *pBuffer = reinterpret_cast<PacketBuffer *>(userData);
-		pBuffer->addPacket(std::move(packet));
-		pushCount++;
+		pBuffer->addPacket(newRawPacket);
 	}
-
 }
 
 void processPacket()
 {
 
-	pcpp::RawPacket *rawPacket;
-	pcpp::Packet *packet;
+	thread_local pcpp::RawPacket *rawPacket;
+	thread_local pcpp::Packet *packet;
 
-	while (!terminateThread)
+	while (!terminateThread || pBuffer.hasPackets())
 	{
 
-		while (!pBuffer.hasPackets())
+		std::unique_lock<std::mutex> lock(parserMutex);
+
+		if (pBuffer.hasPackets())
+
 		{
 
-			{
-				std::lock_guard<std::mutex> lock(parserMutex);
+			// pcpp::Packet packet;
 
-				rawPacket = pBuffer.getPacket().release();
-				// std::ostringstream threadID;
-				// threadID << std::this_thread::get_id();
-				// std::cout << "RawPacket Pointer = " << rawPacket << " Thread ID = " << threadID.str() << std::endl;
+			rawPacket = pBuffer.getPacket();
 
-				packet = new pcpp::Packet(rawPacket);
-			}
-
-			// if (rawPacket.get()->getRawData() != nullptr && rawPacket.get()->getRawDataLen() > 0)
-			// {
-			// 	pcpp::Packet parsedPacket(rawPacket.get);
-			// }
-			// else
-			// {
-			// 	std::cerr << "Invalid RawPacket!" << std::endl;
-			// }
-
-			// std::cout << "Processing packet with length: " << rawPacket->getRawDataLen() << std::endl;
-			// bool ipv4 = packet->isPacketOfType(pcpp::TCP);
-			popCount++;
-
-			// create parsed packet with all layers.
-			// pcpp::Packet packet(rawPacket.get());
-
-			// 			std::string queryString = "";
-			// 			char *error_message = 0;
-			// 			int rc = 0;
+			packet = new pcpp::Packet(rawPacket);
 
 			// check if valid eternet II packet and stop processing if not
 			// TODO - Add Support for IEEE 802.3 ?????????????????????????????????
-			// pcpp::EthLayer *ethernetLayer = packet.getLayerOfType<pcpp::EthLayer>();
-			// if (ethernetLayer == nullptr)
-			// {
-			// 	// no futher processing required
-			// 	continue;
-			// }
-
-			// 			// don't process communications between MacBook and Virtual Machine
-			// 			// pcpp::MacAddress ubuntuMacAddress = pcpp::MacAddress("08:00:27:54:a5:55");
-			// 			// pcpp::MacAddress macBookMacAddress = pcpp::MacAddress("3a:f9:d3:16:91:64");
-			// 			// pcpp::MacAddress srcMacAddr = ethernetLayer->getSourceMac();
-			// 			// pcpp::MacAddress dstMacAddr = ethernetLayer->getDestMac();
-
-			// 			// if (srcMacAddr == macBookMacAddress || dstMacAddr == macBookMacAddress || srcMacAddr == ubuntuMacAddress || dstMacAddr == ubuntuMacAddress)
-			// 			// {
-			// 			// 	runThread = false;
-			// 			// 	continue;
-			// 			// }
+			pcpp::EthLayer *ethernetLayer = packet->getLayerOfType<pcpp::EthLayer>();
+			if (ethernetLayer == nullptr)
+			{
+				// no futher processing required
+				delete packet;
+				delete rawPacket;
+				break;
+			}
 
 			// 			// // check if arp message
-			// 			// auto *arpLayer = parsedPacket.getLayerOfType<pcpp::ArpLayer>();
-			// 			// if (arpLayer != nullptr)
-			// 			// {
-			// 			// 	// note that sender is used by host requesting MAC address  and host responding with Mac address
-			// 			// 	//updateActiveAsset(arpLayer->getSenderIpAddr().toString(), arpLayer->getSenderMacAddress().toString(), otdb::arp);
+			// auto *arpLayer = packet->getLayerOfType<pcpp::ArpLayer>();
+			// if (arpLayer != nullptr)
+			// {
+			// 	// note that sender is used by host requesting MAC address  and host responding with Mac address
+			// 	// updateActiveAsset(arpLayer->getSenderIpAddr().toString(), arpLayer->getSenderMacAddress().toString(), otdb::arp);
 
-			// 			// 	// no further processing of ARP message
-			// 			// 	continue;
-			// 			// }
+			// 	// no further processing of ARP message
 
-			// check if IPv4
+			// 	delete packet;
+			// 	delete rawPacket;
+			// 	break;
+			// }
 
+			// process ip layer
 			if (packet->isPacketOfType(pcpp::IPv4))
 			{
 				pcpp::IPv4Layer *ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
 				uint64_t ipv4AddrInt = ipv4Layer->getSrcIPv4Address().toInt();
+
 				if (AssetList.find(ipv4AddrInt) == AssetList.end())
 				{
 					// no entry for this ip address exists so add ip address and empty
 					AssetList.insert({ipv4AddrInt, new assetStruct()});
 				}
-
-				// 				// get sources address as string
-				// 				// updateActiveAsset(ipv4Layer->getSrcIPv4Address().toString());
-
-				// 				// updateInactiveAsset(ipv4Layer->getDstIPv4Address().toString());
-				// 			}
 			}
 
-			// delete packet popped from buffer  - not ncessary - when parsed packet goes out of scop on each while - rawpacket is deleted.
 
-			{
-				std::lock_guard<std::mutex> lock(parserMutex);
-				// delete packet;
-				delete packet;
-				delete rawPacket;
-			}
+			/* Clean up memory*/
+			delete packet;
+			delete rawPacket;
 		}
 	}
 }
