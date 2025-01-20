@@ -215,7 +215,7 @@ PCAP_INCLUDE_DIR:PATH=/usr/include
 PCAP_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libpcap.so
 
 //The directory containing a CMake configuration file for PcapPlusPlus.
-PcapPlusPlus_DIR:PATH=/home/paul/otiq/libs/pcapplusplus-23.09/lib/cmake/pcapplusplus
+PcapPlusPlus_DIR:PATH=/usr/local/lib/cmake/pcapplusplus
 
 //Value Computed by CMake
 otiq_BINARY_DIR:STATIC=/home/paul/otiq/build
@@ -378,18 +378,24 @@ CMAKE_STRIP-ADVANCED:INTERNAL=1
 CMAKE_UNAME:INTERNAL=/usr/bin/uname
 //ADVANCED property for variable: CMAKE_VERBOSE_MAKEFILE
 CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
+//Result of TRY_COMPILE
+COMPILE_RESULT_VAR:INTERNAL=TRUE
 //Details about finding PCAP
-FIND_PACKAGE_MESSAGE_DETAILS_PCAP:INTERNAL=[/usr/lib/x86_64-linux-gnu/libpcap.so][/usr/include][v()]
+FIND_PACKAGE_MESSAGE_DETAILS_PCAP:INTERNAL=[/usr/lib/x86_64-linux-gnu/libpcap.so][/usr/include][v1.10.1 (with TPACKET_V3)()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Have function pcap_setdirection
 HAVE_PCAP_DIRECTION:INTERNAL=1
 //Have function pcap_set_immediate_mode
 HAVE_PCAP_IMMEDIATE_MODE:INTERNAL=1
+//Have function pcap_lib_version
+HAVE_PCAP_LIB_VERSION:INTERNAL=1
 //ADVANCED property for variable: PCAP_INCLUDE_DIR
 PCAP_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PCAP_LIBRARY
 PCAP_LIBRARY-ADVANCED:INTERNAL=1
 //Test PCAP_LINKS_SOLO
 PCAP_LINKS_SOLO:INTERNAL=1
+//Result of TRY_RUN
+RUN_RESULT_VAR:INTERNAL=0
 

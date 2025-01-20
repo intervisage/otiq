@@ -172,9 +172,9 @@ otiq: CMakeFiles/otiq.dir/src/otdb.cpp.o
 otiq: CMakeFiles/otiq.dir/src/otbw.cpp.o
 otiq: CMakeFiles/otiq.dir/src/otpp.cpp.o
 otiq: CMakeFiles/otiq.dir/build.make
-otiq: ../libs/pcapplusplus-23.09/lib/libPcap++.a
-otiq: ../libs/pcapplusplus-23.09/lib/libPacket++.a
-otiq: ../libs/pcapplusplus-23.09/lib/libCommon++.a
+otiq: /usr/local/lib/libPcap++.a
+otiq: /usr/local/lib/libPacket++.a
+otiq: /usr/local/lib/libCommon++.a
 otiq: /usr/lib/x86_64-linux-gnu/libpcap.so
 otiq: CMakeFiles/otiq.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/paul/otiq/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Linking CXX executable otiq"
