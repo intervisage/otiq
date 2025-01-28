@@ -25,6 +25,7 @@
 #include "otlog.h"
 #include "otdb.h"
 #include "otpbuff.h"
+#include "otassets.h"
 
 enum bufferOpTypes
 {
@@ -39,14 +40,6 @@ int updateActiveAsset(std::string ipv4Addr, std::string macAddr = "", otdb::MacI
 
 int updateInactiveAsset(std::string ipv4Addr);
 
-struct assetStruct
-{
-	uint64_t lastActivity;
-	uint64_t macAddress;
-	bool macFromArp;
-};
-
-std::map<uint64_t, assetStruct *> AssetList;
 PacketBuffer pBuffer;
 
 std::thread processPacketThreadPtr_1;
@@ -63,6 +56,7 @@ uint64_t totalExecutionTime;
 
 static std::atomic<bool> runThread;
 bool terminateThread;
+AssetList assetList;
 
 namespace otpp
 {
@@ -88,10 +82,6 @@ namespace otpp
 		// start packet capture thread
 		otlog::log("OTPP: Starting async traffic capture.");
 		dev->startCapture(otpp::onPacketArrives, &pBuffer);
-
-		// TODO - Delay for Testing
-		// sleep(10);
-		// std::cout << "---------------------------" << std::endl;
 
 		// start packet consumer thread 1
 		processPacketThreadPtr_1 = std::thread(processPacket);
@@ -124,8 +114,8 @@ namespace otpp
 		// signal processing thread to stop
 		terminateThread = true;
 
-		// Monitor time taken to process packets in buffer after terminate signal passed
-		// auto clearoutStart = std::chrono::high_resolution_clock::now();
+		// clear buffer of remaining packets
+		pBuffer.clearBuffer();
 
 		// wait for thread to return
 		processPacketThreadPtr_1.join();
@@ -134,13 +124,6 @@ namespace otpp
 		processPacketThreadPtr_4.join();
 
 		otlog::log("OTPP: Process Loops terminated.");
-
-		// auto clearoutStop = std::chrono::high_resolution_clock::now();
-
-		// uint64_t clearoutTime = std::chrono::duration_cast<std::chrono::seconds>(clearoutStop - clearoutStart).count();
-
-		// otlog::log("OTPP: Buffer clearout packets = " + std::to_string(clearoutPackets));
-		// otlog::log("OTPP: Buffer clearout time (seconds) = " + std::to_string(clearoutTime));
 
 		// // clear buffer - this will delete packet instances through use of unique_ptrs
 		if (pBuffer.getSize() != 0)
@@ -167,22 +150,16 @@ namespace otpp
 		std::cout << "Pop Count = " << std::to_string(pBuffer.getPopCount()) << std::endl;
 		std::cout << "Drop Packet Count Push = " << std::to_string(pBuffer.getDropCountPush()) << std::endl;
 		std::cout << "Drop Packet Percentage = " << std::to_string(avgDrop) << std::endl;
-		std::cout << "Asset list size = " << std::to_string(AssetList.size()) << std::endl;
+		std::cout << "Asset list size = " << std::to_string(assetList.getSize()) << std::endl;
 	}
 
 	// Note that onPacketArrives is called from a separate PCapPlusPlus thread - so need to pass pointer to buffer
 	void onPacketArrives(pcpp::RawPacket *rawPacket, pcpp::PcapLiveDevice *dev, void *userData)
 	{
 
-		// add atomic to avoid calling routine when routine is already processing
-
+		// create new raw packet from passed raw packet and push associated pointer into buffer
 		pcpp::RawPacket *newRawPacket = new pcpp::RawPacket(*rawPacket);
 		pcpp::Packet packet(newRawPacket);
-
-		// std::ostringstream threadID;
-		// threadID << std::this_thread::get_id();
-		// std::cout << "RawPacket Pointer = " << newRawPacket << " Thread ID = " << threadID.str() << std::endl;
-
 		PacketBuffer *pBuffer = reinterpret_cast<PacketBuffer *>(userData);
 		pBuffer->addPacket(newRawPacket);
 	}
@@ -191,34 +168,31 @@ namespace otpp
 void processPacket()
 {
 
-	thread_local pcpp::RawPacket *rawPacket;
-	thread_local pcpp::Packet *packet;
+	pcpp::RawPacket *rawPacket;
+	pcpp::Packet *packet;
+	pcpp::EthLayer *ethernetLayer;
+	pcpp::IPv4Layer *ipv4Layer;
 
 	while (!terminateThread || pBuffer.hasPackets())
 	{
 
-		std::unique_lock<std::mutex> lock(parserMutex);
+		rawPacket = pBuffer.getPacket();
 
-		if (pBuffer.hasPackets())
-
+		if (rawPacket != nullptr)
 		{
-
-			// pcpp::Packet packet;
-
-			rawPacket = pBuffer.getPacket();
 
 			packet = new pcpp::Packet(rawPacket);
 
 			// check if valid eternet II packet and stop processing if not
 			// TODO - Add Support for IEEE 802.3 ?????????????????????????????????
-			pcpp::EthLayer *ethernetLayer = packet->getLayerOfType<pcpp::EthLayer>();
-			if (ethernetLayer == nullptr)
-			{
-				// no futher processing required
-				delete packet;
-				delete rawPacket;
-				break;
-			}
+			// ethernetLayer = packet->getLayerOfType<pcpp::EthLayer>();
+			// if (ethernetLayer == nullptr)
+			// {
+			// 	// no futher processing required
+			// 	delete packet;
+			// 	delete rawPacket;
+			// 	break;
+			// }
 
 			// 			// // check if arp message
 			// auto *arpLayer = packet->getLayerOfType<pcpp::ArpLayer>();
@@ -237,16 +211,9 @@ void processPacket()
 			// process ip layer
 			if (packet->isPacketOfType(pcpp::IPv4))
 			{
-				pcpp::IPv4Layer *ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
-				uint64_t ipv4AddrInt = ipv4Layer->getSrcIPv4Address().toInt();
-
-				if (AssetList.find(ipv4AddrInt) == AssetList.end())
-				{
-					// no entry for this ip address exists so add ip address and empty
-					AssetList.insert({ipv4AddrInt, new assetStruct()});
-				}
+				ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
+				assetList.addAsset(ipv4Layer->getSrcIPv4Address().toInt(), otassets::assetDetails());
 			}
-
 
 			/* Clean up memory*/
 			delete packet;

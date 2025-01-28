@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	// make sure database is open and in memory before this starts
 
 	// pause main thread
-	sleep(180);
+	sleep(10);
 
 	// stop packet capture and processing
 	otpp::stop(dev);

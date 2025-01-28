@@ -25,16 +25,19 @@ private:
     uint64_t dropCountPop;
     uint64_t popCount;
     uint64_t pushCount;
+    std::condition_variable cv;
+    std::atomic<bool> clearBufferFlag;
 
 public:
     PacketBuffer()
     {
         maxQueueSize = 0;
-        allowedQueueSize = 1500000;
+        allowedQueueSize = 1200000;
         popCount = 0;
         pushCount = 0;
         dropCountPush = 0;
         dropCountPop = 0;
+        clearBufferFlag.store(false);
     }
 
     // Add an item to the back of the deque
@@ -42,7 +45,11 @@ public:
     {
         std::lock_guard<std::mutex> lock(dequeMutex);
 
-        if (packetDeque.size() < allowedQueueSize)
+        if (packetDeque.size() > allowedQueueSize)
+        {
+            dropCountPush++;
+        }
+        else
         {
             {
                 packetDeque.push_back(packet);
@@ -52,19 +59,33 @@ public:
                 }
             }
             pushCount++;
-        }
-        else
-        {
-            dropCountPush++;
+            cv.notify_one();
         }
     }
 
-    // Remove an item from the front of the deque
+    /* Removes an item from the front of the deque
+    clearBufferFlag used to decide if getPacket should wait for notification from 
+    addPacket. Note this is important once capture has ended - in order t clear out the buffer
+    */
     pcpp::RawPacket *getPacket()
     {
-        // check if deque is empty
+        
         std::unique_lock<std::mutex> lock(dequeMutex);
 
+        // if not clearing buffer after capture is finished then wait for notification from
+        // addPackt.
+
+
+
+
+        if (!clearBufferFlag.load())
+        {
+            cv.wait(lock, [this]
+                    { return !packetDeque.empty() || clearBufferFlag.load(); });
+        }
+
+        // if no packets, return null pointer - used by calling routine to check if packets
+        // are available for proceassing
         if (packetDeque.empty())
         {
             return nullptr;
@@ -84,6 +105,17 @@ public:
     {
         std::lock_guard<std::mutex> lock(dequeMutex);
         return !packetDeque.empty();
+    }
+
+    // used to cklear buffer after capture has completed
+    void clearBuffer()
+    {
+        std::lock_guard<std::mutex> lock(dequeMutex);
+        clearBufferFlag.store(true);
+
+        // notify all threads to make sure none are left hanging waiting for addPacket to trigger notification
+        cv.notify_all();
+        
     }
 
     int getSize()
@@ -117,7 +149,7 @@ public:
         return dropCountPop;
     }
 
-    // Destructor to clean up remaining pointers in the deque
+    // Destructor to clean up remaining pointers in the deque - shouldn't be any@@
     ~PacketBuffer()
     {
         while (!packetDeque.empty())
