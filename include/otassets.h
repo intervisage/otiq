@@ -11,7 +11,7 @@ namespace otassets
 {
     struct assetDetails
     {
-        uint64_t lastActivity;
+        std::string ipv4Address; 
         uint64_t macAddress;
         bool macFromArp;
     };

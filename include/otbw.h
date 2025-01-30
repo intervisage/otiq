@@ -22,10 +22,6 @@ namespace otbw
     // prints out bandwidths
     void printBandwidths();
 
-    void incDropPacketCount();
-
-    uint64_t getDropPacketCount();
-
 }
 
 #endif

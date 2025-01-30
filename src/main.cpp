@@ -56,8 +56,12 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	// set input buffer size
+	pcpp::PcapLiveDevice::DeviceConfiguration config;
+	config.packetBufferSize = 10 * 1024 * 1024;
+
 	// open the device before start capturing/sending packets
-	if (!dev->open())
+	if (!dev->open(config))
 	{
 		otlog::log("MAIN: Could not open interface for monitorin ( " + monInterfaceName + " )");
 		std::cout << "Cannot open device" << std::endl;
@@ -65,7 +69,7 @@ int main(int argc, char *argv[])
 	}
 
 	// start bandwidth calculator
-	// otbw::start();
+	//otbw::start();
 
 	// start packet capture and processing
 	otpp::start(dev);
@@ -74,16 +78,16 @@ int main(int argc, char *argv[])
 	// make sure database is open and in memory before this starts
 
 	// pause main thread
-	sleep(600);
+	sleep(10);
 
 	// stop packet capture and processing
 	otpp::stop(dev);
 
 	// Stop calculating bandwidth
-	// otbw::stop();
+	//otbw::stop();
 
-	// std::cout << "Arrive Count = " << std::to_string(arriveCount) << std::endl;
-
+	// std::cout << std::endl
+	// 		  << std::endl;
 	// otbw::printBandwidths();
 
 	// Save and close database

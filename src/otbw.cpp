@@ -7,7 +7,6 @@
 #include <cstdint>
 #include <iomanip>
 
-
 #include "otlog.h"
 #include "otdb.h"
 
@@ -27,7 +26,6 @@ namespace
     std::thread calcBandwidthThread;
     bool runStatus = false;
     std::uint64_t totalByteCount = 0;
-    std::uint64_t totalDropPacketCount = 0;
 
     /* Gets bucket size  required to fit latest bps,  assuming 10 buckets in total*/
     uint64_t getBucketSize(uint64_t num)
@@ -113,7 +111,6 @@ namespace otbw
      */
     void start()
     {
-    
 
         // initialis smallest bucket
         // lowest number of bps per bucket. So with 10 buckets, max mandwidth = 999bps eg 1000bps - 1.
@@ -128,7 +125,6 @@ namespace otbw
             bucketValue[i] = 0;
         }
 
-    
         // zero total byte count
         totalByteCount = 0;
 
@@ -139,7 +135,6 @@ namespace otbw
         // provide custom name for thread
         std::string threadName = "otiq-otbw";
         pthread_setname_np(calcBandwidthThread.native_handle(), threadName.c_str());
-        // calcBandwidthThread.detach(); NOTE _ DETACH NOT REQUIRED _ NEED THREAD TO BE JOINED BY STOP
     }
 
     /* terminates and joins thread
@@ -192,33 +187,14 @@ namespace otbw
     void printBandwidths()
     {
         std::cout << "Packet count = " << std::to_string(packetCount) << std::endl;
-        std::cout << "Dropped Packets  = " << std::to_string(totalDropPacketCount) << std::endl;
-        float droppedpercent = (float)totalDropPacketCount * 100 / packetCount;
-        std::cout << "Percentage dropped packets  = " << std::fixed << std::setprecision(2) << std::to_string(droppedpercent) << std::endl;
-
-
-        std::cout << "Total byte count = " << totalByteCount << " , Bandwidths as follows... " << std::endl;
-
+        std::cout << "Total byte count = " << totalByteCount << std::endl;
         std::cout << "Min Bandwidth = " << std::to_string(minBandwidth) << std::endl;
         std::cout << "Max Bandwidth  = " << std::to_string(maxBandwidth) << std::endl;
         std::cout << "Final bucket size  = " << std::to_string(bucketSize) << std::endl;
-
-        
-
         for (int i = 0; i < 10; i++)
         {
             std::cout << "bucket [ " << std::to_string(i) + " ] = " << std::to_string(bucketValue[i]) << std::endl;
         }
-    }
-
-    void incDropPacketCount()
-    {
-        totalDropPacketCount++;
-    }
-
-    uint64_t getDropPacketCount()
-    {
-        return totalDropPacketCount;
     }
 
 }
