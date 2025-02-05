@@ -7,11 +7,11 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/paul/otiq/include -isystem /usr/local/include/pcapplusplus
 
-C_FLAGS =  -march=armv8-a -g
+C_FLAGS = -g
 
 CXX_DEFINES = 
 
 CXX_INCLUDES = -I/home/paul/otiq/include -isystem /usr/local/include/pcapplusplus
 
-CXX_FLAGS =  -march=armv8-a -g -std=gnu++11
+CXX_FLAGS = -g -std=gnu++11
 

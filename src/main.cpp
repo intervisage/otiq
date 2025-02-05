@@ -8,7 +8,6 @@
 #include "otdb.h"
 #include "otpp.h"
 
-uint64_t arriveCount = 0;
 
 int main(int argc, char *argv[])
 {
@@ -26,11 +25,6 @@ int main(int argc, char *argv[])
 
 	// remove previous logs *** TODO - remove this
 	otlog::deleteAll();
-
-	// uint64_t pushCount = 94774038;
-	// uint64_t dropCountPush = 32367025;
-	// float avgDrop = static_cast<float>(dropCountPush) / (dropCountPush + pushCount);
-	// std::cout  << " average = " << std::to_string(avgDrop) << std::endl;
 
 	std::string databaseFile = "test.db";
 
@@ -56,12 +50,10 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	// set input buffer size
-	pcpp::PcapLiveDevice::DeviceConfiguration config;
-	config.packetBufferSize = 10 * 1024 * 1024;
+
 
 	// open the device before start capturing/sending packets
-	if (!dev->open(config))
+	if (!dev->open())
 	{
 		otlog::log("MAIN: Could not open interface for monitorin ( " + monInterfaceName + " )");
 		std::cout << "Cannot open device" << std::endl;
@@ -69,25 +61,22 @@ int main(int argc, char *argv[])
 	}
 
 	// start bandwidth calculator
-	//otbw::start();
+	otbw::start();
 
 	// start packet capture and processing
 	otpp::start(dev);
 
-	// start capture in async mode. Give a callback function to call to whenever a packet is captured and the stats object as the cookie
-	// make sure database is open and in memory before this starts
-
 	// pause main thread
-	sleep(10);
+	sleep(600);
 
 	// stop packet capture and processing
 	otpp::stop(dev);
 
 	// Stop calculating bandwidth
-	//otbw::stop();
+	otbw::stop();
 
 	// std::cout << std::endl
-	// 		  << std::endl;
+	//  		  << std::endl;
 	// otbw::printBandwidths();
 
 	// Save and close database

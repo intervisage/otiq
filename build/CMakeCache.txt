@@ -212,7 +212,7 @@ CMAKE_VERBOSE_MAKEFILE:BOOL=FALSE
 PCAP_INCLUDE_DIR:PATH=/usr/include
 
 //Path to a library.
-PCAP_LIBRARY:FILEPATH=/usr/lib/aarch64-linux-gnu/libpcap.so
+PCAP_LIBRARY:FILEPATH=/usr/lib/x86_64-linux-gnu/libpcap.so
 
 //The directory containing a CMake configuration file for PcapPlusPlus.
 PcapPlusPlus_DIR:PATH=/usr/local/lib/cmake/pcapplusplus
@@ -381,7 +381,7 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 //Result of TRY_COMPILE
 COMPILE_RESULT_VAR:INTERNAL=TRUE
 //Details about finding PCAP
-FIND_PACKAGE_MESSAGE_DETAILS_PCAP:INTERNAL=[/usr/lib/aarch64-linux-gnu/libpcap.so][/usr/include][v1.10.1 (with TPACKET_V3)()]
+FIND_PACKAGE_MESSAGE_DETAILS_PCAP:INTERNAL=[/usr/lib/x86_64-linux-gnu/libpcap.so][/usr/include][v1.10.1 (with TPACKET_V3)()]
 //Details about finding Threads
 FIND_PACKAGE_MESSAGE_DETAILS_Threads:INTERNAL=[TRUE][v()]
 //Have function pcap_setdirection

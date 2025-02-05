@@ -1,0 +1,5 @@
+# OTIQ DEVELOPMENT CONFIGUERATION
+
+## ESXi
+
+When using ESXi virtual switches for capturing traffic - make sure VLAN is set to 4095 in order catch all the traffic.

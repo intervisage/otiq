@@ -35,7 +35,7 @@ int updateInactiveAsset(std::string ipv4Addr);
 
 PacketBuffer pBuffer;
 
-uint64_t tempPktCount;
+
 
 std::thread processPacketThreadPtr_1;
 std::thread processPacketThreadPtr_2;
@@ -53,10 +53,6 @@ namespace otpp
 	void start(pcpp::PcapLiveDevice *dev)
 	{
 
-
-		tempPktCount = 0;
-
-
 		terminateThread = false;
 		//receivedRawPacket = nullptr;
 
@@ -65,24 +61,24 @@ namespace otpp
 		dev->startCapture(otpp::onPacketArrives, &pBuffer);
 
 		// start packet consumer thread 1
-		// processPacketThreadPtr_1 = std::thread(processPacket);
-		// std::string threadName1 = "otiq-otpp-1";
-		// pthread_setname_np(processPacketThreadPtr_1.native_handle(), threadName1.c_str());
+		processPacketThreadPtr_1 = std::thread(processPacket);
+		std::string threadName1 = "otiq-otpp-1";
+		pthread_setname_np(processPacketThreadPtr_1.native_handle(), threadName1.c_str());
 
 		// // start packet consumer thread 2
-		// processPacketThreadPtr_2 = std::thread(processPacket);
-		// std::string threadName2 = "otiq-otpp-2";
-		// pthread_setname_np(processPacketThreadPtr_2.native_handle(), threadName2.c_str());
+		processPacketThreadPtr_2 = std::thread(processPacket);
+		std::string threadName2 = "otiq-otpp-2";
+		pthread_setname_np(processPacketThreadPtr_2.native_handle(), threadName2.c_str());
 
 		// start packet consumer thread 3
-		// processPacketThreadPtr_3 = std::thread(processPacket);
-		// std::string threadName3 = "otiq-otpp-3";
-		// pthread_setname_np(processPacketThreadPtr_3.native_handle(), threadName3.c_str());
+		processPacketThreadPtr_3 = std::thread(processPacket);
+		std::string threadName3 = "otiq-otpp-3";
+		pthread_setname_np(processPacketThreadPtr_3.native_handle(), threadName3.c_str());
 
 		// start packet consumer thread 3
-		// processPacketThreadPtr_4 = std::thread(processPacket);
-		// std::string threadName4 = "otiq-otpp-4";
-		// pthread_setname_np(processPacketThreadPtr_4.native_handle(), threadName4.c_str());
+		processPacketThreadPtr_4 = std::thread(processPacket);
+		std::string threadName4 = "otiq-otpp-4";
+		pthread_setname_np(processPacketThreadPtr_4.native_handle(), threadName4.c_str());
 	}
 
 	void stop(pcpp::PcapLiveDevice *dev)
@@ -99,10 +95,10 @@ namespace otpp
 		pBuffer.clearBuffer();
 
 		// wait for thread to return
-		// processPacketThreadPtr_1.join();
-		// processPacketThreadPtr_2.join();
-		// processPacketThreadPtr_3.join();
-		// processPacketThreadPtr_4.join();
+		processPacketThreadPtr_1.join();
+		processPacketThreadPtr_2.join();
+		processPacketThreadPtr_3.join();
+		processPacketThreadPtr_4.join();
 
 		otlog::log("OTPP: Process Loops terminated.");
 
@@ -117,9 +113,10 @@ namespace otpp
 		}
 
 		// output stats
-		std::cout << "Temp Packet Count = " << std::to_string(tempPktCount) << std::endl;
-		float avgDrop = static_cast<float>(pBuffer.getDropCountPush()) / (pBuffer.getDropCountPush() + pBuffer.getPushCount());
+		float avgDrop = static_cast<float>(pBuffer.getDropCountPush()) * 100 / (pBuffer.getDropCountPush() + pBuffer.getPushCount());
+		float buffPercent = static_cast<float>(pBuffer.getMaxQueueSize()) * 100 /pBuffer.getPushCount();
 		std::cout << "Maximum buffer size = " << std::to_string(pBuffer.getMaxQueueSize()) << std::endl;
+		std::cout << "Maximum buffer size percentage of Push = " << std::to_string(buffPercent) << std::endl;
 		std::cout << "Push Count = " << std::to_string(pBuffer.getPushCount()) << std::endl;
 		std::cout << "Pop Count = " << std::to_string(pBuffer.getPopCount()) << std::endl;
 		std::cout << "Drop Packet Count Push = " << std::to_string(pBuffer.getDropCountPush()) << std::endl;
@@ -132,14 +129,12 @@ namespace otpp
 	{
 
 		// pass raw packet length to otbw to calculate bandwidth
-		//otbw::addByteCount(rawPacket->getRawDataLen());
-
-		tempPktCount++;
+		otbw::addByteCount(rawPacket->getRawDataLen());
 
 		// create new raw packet from passed raw packet and push associated pointer into buffer
-		// pcpp::RawPacket* newRawPacket = new pcpp::RawPacket(*rawPacket);
-		// PacketBuffer* pBuffer = reinterpret_cast<PacketBuffer *>(userData);
-		// pBuffer->addPacket(newRawPacket);
+		pcpp::RawPacket* newRawPacket = new pcpp::RawPacket(*rawPacket);
+		PacketBuffer* pBuffer = reinterpret_cast<PacketBuffer *>(userData);
+		pBuffer->addPacket(newRawPacket);
 	}
 }
 
@@ -181,11 +176,11 @@ void processPacket()
 			// }
 
 			// process ip layer
-			// if (packet->isPacketOfType(pcpp::IPv4))
-			// {
-			// 	pcpp::IPv4Layer *ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
-			// 	assetList.addAsset(ipv4Layer->getSrcIPv4Address().toInt(), otassets::assetDetails());
-			// }
+			if (packet->isPacketOfType(pcpp::IPv4))
+			{
+				pcpp::IPv4Layer *ipv4Layer = packet->getLayerOfType<pcpp::IPv4Layer>();
+				assetList.addAsset(ipv4Layer->getSrcIPv4Address().toInt(), otassets::assetDetails());
+			}
 
 			/* Clean up memory*/
 			delete packet;
