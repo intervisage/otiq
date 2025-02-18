@@ -19,12 +19,15 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
+
 	std::string monInterfaceName = argv[1];
 
 	int rc; // return values
 
 	// remove previous logs *** TODO - remove this
 	otlog::deleteAll();
+
+	
 
 	std::string databaseFile = "test.db";
 
@@ -34,6 +37,8 @@ int main(int argc, char *argv[])
 		otlog::log("MAIN: Could not open database file ( " + databaseFile + " )");
 		return 1;
 	}
+
+
 
 	// IPv4 address of the interface we want to sniff
 	// std::string interfaceIPAddr = "192.168.56.10";
@@ -67,7 +72,7 @@ int main(int argc, char *argv[])
 	otpp::start(dev);
 
 	// pause main thread
-	sleep(600);
+	sleep(180);
 
 	// stop packet capture and processing
 	otpp::stop(dev);
@@ -75,9 +80,9 @@ int main(int argc, char *argv[])
 	// Stop calculating bandwidth
 	otbw::stop();
 
-	// std::cout << std::endl
-	//  		  << std::endl;
-	// otbw::printBandwidths();
+	std::cout << std::endl
+	 		  << std::endl;
+	otbw::printBandwidths();
 
 	// Save and close database
 	otdb::close();

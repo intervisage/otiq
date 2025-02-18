@@ -12,10 +12,10 @@ namespace
     // anonymous namespace used to control visibility
 
     /* in-memory based db instance */
-    sqlite3 *db;
+    sqlite3* db;
 
     /* file-based db instance */
-    sqlite3 *fileDb;
+    sqlite3* fileDb;
 
     /* file name for storing file-based eb instance */
     std::string dbFileName;
@@ -29,7 +29,7 @@ namespace
     rowsType rows;
 
     /* Last error code */
-    char *error_message = 0;
+    char* error_message = 0;
 
     /* Clears query response matrix */
     void clearResponseRows()
@@ -43,7 +43,7 @@ namespace
     }
 
     /* callback called by sqlite execute function to populate reponse matrix */
-    int callback(void *, int argc, char **argv, char **azColName)
+    int callback(void*, int argc, char** argv, char** azColName)
     {
         // store headings if not already added
         if (colHeadings.empty())
@@ -91,13 +91,14 @@ namespace otdb
 
         std::string sql;
         int dbFileExistsFlag = 0;
-        char *error_message = 0;
+        char* error_message = 0;
         int rc; // return values
 
         // set flag if file exists
         std::ifstream file(dbFileName);
         dbFileExistsFlag = (file.is_open());
         file.close();
+
 
         // TODO - check return code
 
@@ -126,7 +127,11 @@ namespace otdb
                 return -1;
             }
 
-            sqlite3_backup *onlineBackupHandle = sqlite3_backup_init(db, "main", fileDb, "main");
+
+
+            sqlite3_backup* onlineBackupHandle = sqlite3_backup_init(db, "main", fileDb, "main");
+
+
 
             // Copy all pages
             rc = sqlite3_backup_step(onlineBackupHandle, -1);
@@ -167,17 +172,18 @@ namespace otdb
             // Note - default value for JSON is important!!!
 
             sql = "CREATE TABLE ASSETS("
-                  "IP TEXT PRIMARY KEY,"
-                  "FIRST_ACTIVITY INT DEFAULT 0,"
-                  "LAST_ACTIVITY INT DEFAULT 0,"
-                  "MAC JSON DEFAULT '') WITHOUT ROWID;";
+                "IP TEXT PRIMARY KEY,"
+                "MAC TEXT, "
+                "MAC_INFO TEXT, "
+                "DUP_MAC TEXT"
+                ") WITHOUT ROWID;";
 
             // create bandwidth table
-            sql += "CREATE TABLE BANDWIDTH("
-                   "BUCKET_SIZE INT DEFAULT 0,"
-                   "MAXIMUM INT DEFAULT 0,"
-                   "MINIMUM INT DEFAULT 0,"
-                   "BUCKET_VALUES JSON DEFAULT '');";
+            // sql += "CREATE TABLE BANDWIDTH("
+            //     "BUCKET_SIZE INT DEFAULT 0,"
+            //     "MAXIMUM INT DEFAULT 0,"
+            //     "MINIMUM INT DEFAULT 0,"
+            //     "BUCKET_VALUES JSON DEFAULT '');";
 
             rc = sqlite3_exec(db, sql.c_str(), 0, 0, &error_message);
 
@@ -203,7 +209,7 @@ namespace otdb
         */
 
         std::string sql;
-        char *error_message = 0;
+        char* error_message = 0;
         int rc; // return values
 
         // remove any existing database file to allow Vacuum into it from memory based db
@@ -293,21 +299,5 @@ namespace otdb
         return rows[row][colIndex];
     }
 
-    // return string associated with enumeration e.g. "arp" for arp
-    std::string getMacInfoString(MacInfo macInfo)
-    {
-        switch (macInfo)
-        {
-        case otdb::arp:
-            return "arp";
-            break;
-        case otdb::ttl:
-            return "ttl";
-            break;
-        default:
-            return "";
-            break;
-        }
-    }
 
 }

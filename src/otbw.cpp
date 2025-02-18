@@ -188,8 +188,8 @@ namespace otbw
     {
         std::cout << "Packet count = " << std::to_string(packetCount) << std::endl;
         std::cout << "Total byte count = " << totalByteCount << std::endl;
-        std::cout << "Min Bandwidth = " << std::to_string(minBandwidth) << std::endl;
-        std::cout << "Max Bandwidth  = " << std::to_string(maxBandwidth) << std::endl;
+        std::cout << "Min Bandwidth (bps) = " << std::to_string(minBandwidth) << std::endl;
+        std::cout << "Max Bandwidth (bps)  = " << std::to_string(maxBandwidth) << std::endl;
         std::cout << "Final bucket size  = " << std::to_string(bucketSize) << std::endl;
         for (int i = 0; i < 10; i++)
         {

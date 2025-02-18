@@ -5,18 +5,6 @@
 
 namespace otdb
 {
-
-    // enumerations for macInfo within Assets table
-    enum MacInfo
-    {
-        arp,
-        ttl,
-        none
-    };
-
-    // return string associated with enumeration e.g. "arp" for arp
-    std::string getMacInfoString(MacInfo macInfo);
-
     // opens existing file based db and loads it into memory.
     // if file does not exist then creates database in memory.
     // returns non zero if fails. errorMessage provides last error.
