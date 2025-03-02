@@ -54,4 +54,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC PcapPlusPlus::Pcap++)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC sqlite3)
 
+target_link_libraries(${PROJECT_NAME} PUBLIC lvgl)
+
 target_link_libraries(${PROJECT_NAME} PRIVATE Threads::Threads)
