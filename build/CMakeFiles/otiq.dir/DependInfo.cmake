@@ -8,7 +8,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/paul/otiq/src/sqlite3.c" "CMakeFiles/otiq.dir/src/sqlite3.c.o" "gcc" "CMakeFiles/otiq.dir/src/sqlite3.c.o.d"
   "/home/paul/otiq/src/main.cpp" "CMakeFiles/otiq.dir/src/main.cpp.o" "gcc" "CMakeFiles/otiq.dir/src/main.cpp.o.d"
   "/home/paul/otiq/src/otbw.cpp" "CMakeFiles/otiq.dir/src/otbw.cpp.o" "gcc" "CMakeFiles/otiq.dir/src/otbw.cpp.o.d"
   "/home/paul/otiq/src/otdb.cpp" "CMakeFiles/otiq.dir/src/otdb.cpp.o" "gcc" "CMakeFiles/otiq.dir/src/otdb.cpp.o.d"
